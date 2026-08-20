@@ -1,21 +1,44 @@
-// SkyWatch-20 Traffic Collision Avoidance System (Rust Automation Layer)
-use crate::radar_telemetry::FlightTelemetry;
+// SkyWatch-20 Automated Separation Safety Utility (Rust Core)
+// Compares flight nodes against strict 5.0 NM horizontal and 1,000 FT vertical limits
 
-pub struct TcasEngine {
-    pub safety_threshold_nm: f64,
+#[derive(Debug, Clone)]
+pub struct AirspaceTarget {
+    pub callsign: String,
+    pub x_nm: f64,
+    pub y_nm: f64,
+    pub alt_ft: f64,
 }
 
-impl TcasEngine {
-    pub fn check_separation(&self, ac1: &FlightTelemetry, ac2: &FlightTelemetry) -> bool {
-        // Core 2D Euclidean distance check for quick hazard analysis
-        let distance = ((ac1.x_nm - ac2.x_nm).powi(2) + (ac1.y_nm - ac2.y_nm).powi(2)).sqrt();
-        
-        if distance <= self.safety_threshold_nm {
+pub struct TcasSafetyAuditor {
+    pub min_horizontal_nm: f64,
+    pub min_vertical_ft: f64,
+}
+
+impl TcasSafetyAuditor {
+    pub fn new() -> Self {
+        Self {
+            min_horizontal_nm: 5.0,
+            min_vertical_ft: 1000.0,
+        }
+    }
+
+    /// Evaluates proximity vectors between two active aircraft nodes
+    pub fn evaluate_loss_of_separation(&self, ac1: &AirspaceTarget, ac2: &AirspaceTarget) -> bool {
+        // Calculate 2D horizontal Euclidean distance
+        let dx = ac1.x_nm - ac2.x_nm;
+        let dy = ac1.y_nm - ac2.y_nm;
+        let horizontal_distance = (dx * dx + dy * dy).sqrt();
+
+        // Calculate absolute vertical separation
+        let vertical_distance = (ac1.alt_ft - ac2.alt_ft).abs();
+
+        // Trigger safety alert if BOTH thresholds are violated simultaneously
+        if horizontal_distance < self.min_horizontal_nm && vertical_distance < self.min_vertical_ft {
             println!(
-                "⚠️ [TCAS ALERT] Proximity separation broken between {} and {}! Distance: {:.2} NM",
-                ac1.callsign, ac2.callsign, distance
+                "🚨 [RUST SAFETY CRITICAL]: Loss of separation between {} and {}! (H: {:.2} NM, V: {:.0} FT)",
+                ac1.callsign, ac2.callsign, horizontal_distance, vertical_distance
             );
-            return true; // Conflict detected
+            return true;
         }
         false
     }
