@@ -1,0 +1,22 @@
+(* SkyWatch-20 Differential Shear Dynamics Solver *)
+(* Evaluates structural velocity dissipation curves inside turbulence zones *)
+
+ClearAll[solveTurbulenceDecay];
+
+solveTurbulenceDecay[] := Module[
+    {decayEquation, initialVelocity, timeBounds, analyticalSolution},
+    
+    (* Model aircraft velocity v(t) where aerodynamic parasitic drag is *)
+    (* proportional to velocity squared multiplied by our storm intensity force *)
+    decayEquation = v'[t] == -0.12 * (v[t]^2) - 0.25 * v[t];
+    initialVelocity = v[0] == 1.5; (* Normalized initial cruise speed *)
+    
+    (* Run numerical analytical integration across standard time blocks *)
+    analyticalSolution = DSolve[{decayEquation, initialVelocity}, v[t], t];
+    
+    Print["=== DIFFERENTIAL SIMULATOR RESULTS ==="];
+    Print["Symbolic Speed Decay Function v(t) inside Storm Boundary:"];
+    Print[Simplify[v[t] /. analyticalSolution[[1]]]];
+];
+
+solveTurbulenceDecay[];
