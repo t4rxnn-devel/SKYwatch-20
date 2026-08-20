@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyWatch-20 Modular 3D Interface System</title>
-    <!-- Link the standalone visual design sheet assets directly -->
+    <title>SkyWatch-20 Instrumented RK45 Tactical Radar Console</title>
     <link rel="stylesheet" href="include/app_styles.css">
 </head>
 <body>
-    <h1>=== SKYWATCH-20 ADVANCED RK4 INTERFACE ===</h1>
-    <p>High-Precision 4th-Order Runge-Kutta Aerospace Solver Engine</p>
+    <h1>=== SKYWATCH-20 TACTICAL INTERFACE ===</h1>
+    <p>Production Build Framework: Dynamic Instrumented Range Matrix</p>
     
     <div id="radar-viewport">
-        <div id="warning-banner">⚠️ [ALARM] NO ACTIVE WARNINGS</div>
+        <div id="warning-banner">⚠️ [ALARM] NO ACTIVE PERIMETER WARNINGS</div>
     </div>
 
     <div id="control-panel">
@@ -21,37 +20,41 @@
             <input type="text" id="flightId" value="SU-57" maxlength="7">
         </div>
         <div class="form-group">
-            <label for="speedKnots">Target Cruise Speed (Knots)</label>
+            <label for="speedKnots">Target Cruise Speed (KT)</label>
             <input type="number" id="speedKnots" value="550" min="150" max="1200">
         </div>
         <div class="form-group">
-            <label for="posX">Initial X Vector (NM)</label>
+            <label for="posX">Initial Position X (NM)</label>
             <input type="number" id="posX" value="-18">
         </div>
         <div class="form-group">
-            <label for="posY">Initial Y Vector (NM)</label>
+            <label for="posY">Initial Position Y (NM)</label>
             <input type="number" id="posY" value="-12">
         </div>
-        <button class="spawn-btn" id="spawnBtn">Inject High-Precision Target Vector</button>
+        <button class="spawn-btn" id="spawnBtn">Inject Operational Target Track</button>
 
         <div id="matrix-module">
-            <label>Perspective Orientation Matrix</label>
+            <label>Instrumented Radar Range Configuration Selector Matrix</label>
             <div class="matrix-row">
-                <button class="matrix-btn active" id="camTower">Tower Strategic (Overhead)</button>
-                <button class="matrix-btn" id="camTactical">Tactical Incline (Isometric)</button>
-                <button class="matrix-btn" id="camHorizon">Horizon Wide (Low Angle)</button>
+                <button class="matrix-btn" id="range10">10 NM Range Scale</button>
+                <button class="matrix-btn" id="range20">20 NM Range Scale</button>
+                <button class="matrix-btn active" id="range40">40 NM Range Scale</button>
             </div>
         </div>
     </div>
 
-    <!-- Initialize master animation engine hooks as an ES6 Module tracker -->
+    <!-- Master WebGL ES6 Module Initialization Framework -->
     <script type="module">
         import * as THREE from 'https://cloudflare.com';
-        import { computeRk4Step } from './include/physics_solver.js';
+        import { RadarRangePhysicsEngine } from './include/physics_solver.js';
 
         const container = document.getElementById('radar-viewport');
         const warningBanner = document.getElementById('warning-banner');
         
+        // 1. Initialize our Functional Range & Aerodynamics Core
+        const rangePhysics = new RadarRangePhysicsEngine(40.0);
+
+        // 2. Setup Three.js 3D Hardware Accelerated Pipeline
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x020f05);
         
@@ -68,19 +71,37 @@
         dirLight.position.set(10, 30, 10);
         scene.add(dirLight);
 
-        const gridGroup = new THREE.Group();
-        const gridMat = new THREE.LineBasicMaterial({ color: 0x003311 });
-        for (let r = 5; r <= 25; r += 5) {
-            const points = [];
-            for (let i = 0; i <= 64; i++) {
-                const theta = (i / 64) * Math.PI * 2;
-                points.push(new THREE.Vector3(Math.cos(theta) * r, 0, Math.sin(theta) * r));
-            }
-            const geo = new THREE.BufferGeometry().setFromPoints(points);
-            gridGroup.add(new THREE.Line(geo, gridMat));
-        }
+        // Dynamic Range Rings Group Layer
+        let gridGroup = new THREE.Group();
         scene.add(gridGroup);
 
+        function rebuildDisplayRadarRings() {
+            // Flush old scene layout variables cleanly to prevent memory leaks
+            while(gridGroup.children.length > 0) { 
+                gridGroup.remove(gridGroup.children[0]); 
+            }
+            
+            const gridMat = new THREE.LineBasicMaterial({ color: 0x003311, transparent: true, opacity: 0.7 });
+            const currentRange = rangePhysics.instrument_range_nm;
+            const step_size_nm = currentRange / 4;
+
+            // Generate concentric ring markers based directly on the running numerical range
+            for (let r_nm = step_size_nm; r_nm <= currentRange; r_nm += step_size_nm) {
+                const points = [];
+                // Map the absolute nautical mileage down into WebGL Scene display bounds
+                const mappedRadius = (r_nm / currentRange) * rangePhysics.max_display_radius;
+                
+                for (let i = 0; i <= 64; i++) {
+                    const theta = (i / 64) * Math.PI * 2;
+                    points.push(new THREE.Vector3(Math.cos(theta) * mappedRadius, 0, Math.sin(theta) * mappedRadius));
+                }
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                gridGroup.add(new THREE.Line(geo, gridMat));
+            }
+        }
+        rebuildDisplayRadarRings();
+
+        // 3. Environment Doppler Storm Configuration Cells
         const storms = [
             { center: new THREE.Vector3(8, 0, 6), radius: 5.5, windForce: 0.18, shearDirection: new THREE.Vector3(-1, 0, -0.5).normalize() },
             { center: new THREE.Vector3(-10, 0, -8), radius: 6.0, windForce: 0.25, shearDirection: new THREE.Vector3(0.5, 0, 1).normalize() }
@@ -90,10 +111,14 @@
             const stormGeo = new THREE.CylinderGeometry(storm.radius, storm.radius, 0.2, 32);
             const stormMat = new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.04 });
             const mesh = new THREE.Mesh(stormGeo, stormMat);
-            mesh.position.copy(storm.center);
+            
+            // Initial coordinate transformations mapping weather down to screen canvas positions
+            const dispCoords = rangePhysics.mapPhysicalCoordinatesToDisplaySpace(storm.center.x, storm.center.z, storm.center.y);
+            mesh.position.set(dispCoords.x, dispCoords.y, dispCoords.z);
             scene.add(mesh);
         });
 
+        // 4. Procedural Aviation CAD Delta-Wing Target Generator
         function createCadAircraftMesh() {
             const group = new THREE.Group();
             const hullMat = new THREE.MeshStandardMaterial({ color: 0x00bc56, roughness: 0.3, metalness: 0.7, flatShading: true });
@@ -111,29 +136,26 @@
             const lw = new THREE.Mesh(wingGeo, hullMat); lw.scale.x = -1;
             group.add(rw, lw);
 
-            const finShape = new THREE.Shape();
-            finShape.moveTo(0, 0); finShape.lineTo(0, 0.7); finShape.lineTo(-0.4, 0.7); finShape.lineTo(-0.7, 0);
-            const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.03, bevelEnabled: false });
-            finGeo.rotateY(Math.PI / 2);
-            const fr = new THREE.Mesh(finGeo, hullMat); fr.position.set(0.25, 0.1, -1.1); fr.rotation.z = -0.25;
-            const fl = new THREE.Mesh(finGeo, hullMat); fl.position.set(-0.25, 0.1, -1.1); fl.rotation.z = 0.25;
-            group.add(fr, fl);
-
             return group;
         }
 
         let fleet = [];
 
-        function spawnAircraft(id, x, z, knots) {
-            const mesh = createCadAircraftMesh(); scene.add(mesh);
-            let targetVelocityScalar = (knots / 600.0) * 1.5; let initAngle = Math.atan2(-z, -x);
+        function spawnAircraft(id, x_nm, y_nm, knots) {
+            const mesh = createCadAircraftMesh(); 
+            scene.add(mesh);
+            
+            let initAngle = Math.atan2(-y_nm, -x_nm);
+            
             fleet.push({
-                id: id, mesh: mesh, pos: new THREE.Vector3(x, 1.5, z),
-                vel: new THREE.Vector3(Math.cos(initAngle) * 0.5, 0, Math.sin(initAngle) * 0.5),
-                targetSpeed: targetVelocityScalar, currentYaw: initAngle, currentRoll: 0
+                id: id, mesh: mesh,
+                phys_pos: new THREE.Vector3(x_nm, 1.5, y_nm), // Real position coordinates tracked in absolute miles
+                phys_vel: new THREE.Vector3(Math.cos(initAngle) * (knots/10.0), 0, Math.sin(initAngle) * (knots/10.0)),
+                targetSpeed: knots, currentRoll: 0
             });
         }
 
+        // Initialize Base Tracking Telemetry Dataset
         spawnAircraft("UAL104", -19, -14, 520);
         spawnAircraft("AAL892", 17, 15, 480);
         spawnAircraft("DAL440", -15, 19, 610);
@@ -142,21 +164,24 @@
             const id = document.getElementById('flightId').value.toUpperCase().trim() || "UNK";
             const speed = parseFloat(document.getElementById('speedKnots').value) || 500;
             const x = parseFloat(document.getElementById('posX').value) || 0;
-            const z = parseFloat(document.getElementById('posY').value) || 0;
-            spawnAircraft(id, x, z, speed);
+            const y = parseFloat(document.getElementById('posY').value) || 0;
+            spawnAircraft(id, x, y, speed);
         });
 
-        let targetCamPos = new THREE.Vector3(0, 38, 42);
-        const resetMatrixButtons = () => document.querySelectorAll('.matrix-btn').forEach(b => b.classList.remove('active'));
-
-        document.getElementById('camTower').addEventListener('click', (e) => {
-            resetMatrixButtons(); e.target.classList.add('active'); targetCamPos.set(0, 38, 42);
+        // --- INTERACTIVE RANGE SCALE MATRIX SELECTOR HANDLERS ---
+        const resetRangeButtons = () => document.querySelectorAll('.matrix-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById('range10').addEventListener('click', (e) => {
+            resetRangeButtons(); e.target.classList.add('active');
+            rangePhysics.setInstrumentRange(10.0); rebuildDisplayRadarRings();
         });
-        document.getElementById('camTactical').addEventListener('click', (e) => {
-            resetMatrixButtons(); e.target.classList.add('active'); targetCamPos.set(18, 22, 25);
+        document.getElementById('range20').addEventListener('click', (e) => {
+            resetRangeButtons(); e.target.classList.add('active');
+            rangePhysics.setInstrumentRange(20.0); rebuildDisplayRadarRings();
         });
-        document.getElementById('camHorizon').addEventListener('click', (e) => {
-            resetMatrixButtons(); e.target.classList.add('active'); targetCamPos.set(0, 4, 32);
+        document.getElementById('range40').addEventListener('click', (e) => {
+            resetRangeButtons(); e.target.classList.add('active');
+            rangePhysics.setInstrumentRange(40.0); rebuildDisplayRadarRings();
         });
 
         const sweepGeo = new THREE.ConeGeometry(34, 0.05, 32, 1, true, 0, 0.12);
@@ -167,62 +192,60 @@
 
         const clock = new THREE.Clock();
 
+        // 5. MASTER SYSTEM CLOCK FRAME SYNC ENGINE LOOP
         function animate() {
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.1);
             sweeper.rotation.z -= 0.65 * dt;
 
-            camera.position.lerp(targetCamPos, 0.05);
-            camera.lookAt(0, 0, 0);
-
             let activeWarnings = [];
 
             fleet.forEach(ac => {
-                // EXECUTING THE REDIRECTED SEPARATE MODULE INCLUDED HOOK
-                computeRk4Step(ac, storms, dt);
-                
-                if (ac.pos.length() > 32) ac.pos.set(-ac.pos.x, ac.pos.y, -ac.pos.z);
-                ac.mesh.position.copy(ac.pos);
-
-                let actualHeadingAngle = Math.atan2(ac.vel.z, ac.vel.x);
-                ac.mesh.rotation.y = -actualHeadingAngle + Math.PI / 2;
-
-                let lateralForce = ac.vel.x * ac.vel.z; 
-                let targetRoll = -lateralForce * 4.5; 
-                
+                // Determine if tracking node is inside storm parameters limits
+                let inside_storm = false;
                 storms.forEach(storm => {
-                    if (ac.pos.distanceTo(storm.center) <= storm.radius) {
-                        targetRoll += Math.sin(clock.getElapsedTime() * 25.0) * 0.04;
-                        activeWarnings.push(`${ac.id} ENCOUNTERING SEVERE TURBULENCE FORCE VECTOR`);
-                    }
+                    if (ac.phys_pos.distanceTo(storm.center) <= storm.radius) inside_storm = true;
                 });
-                
-                ac.currentRoll = THREE.MathUtils.lerp(ac.currentRoll, targetRoll, 0.08);
-                ac.mesh.rotation.z = ac.currentRoll;
 
-                const currentSweepAngle = (sweeper.rotation.z) % (Math.PI * 2);
-                const acAngle = Math.atan2(ac.pos.z, ac.pos.x);
-                if (Math.abs(currentSweepAngle - acAngle) < 0.2) {
-                    ac.mesh.children.forEach(part => part.material.color.setHex(0x00ffda));
+                                // PIPELINE STEP 1: Compute true higher-order fluid physics mechanics
+                rangePhysics.computeAdaptiveRkf45Step(ac.phys_pos, ac.phys_vel, ac.targetSpeed, dt * 0.05, inside_storm);
+                
+                // Wrap positions elegantly if they cross global airspace tracking limits
+                if (ac.phys_pos.length() > 45.0) {
+                    ac.phys_pos.set(-ac.phys_pos.x, ac.phys_pos.y, -ac.phys_pos.z);
+                }
+
+                // PIPELINE STEP 2: Evaluate target tracking parameters against the live instrument range
+                if (rangePhysics.isTargetWithinInstrumentRange(ac.phys_pos.x, ac.phys_pos.z)) {
+                    ac.mesh.visible = true;
+
+                    // PIPELINE STEP 3: Map spatial absolute miles cleanly to WebGL display positions
+                    const dispCoords = rangePhysics.mapPhysicalCoordinatesToDisplaySpace(ac.phys_pos.x, ac.phys_pos.z, ac.phys_pos.y);
+                    ac.mesh.position.set(dispCoords.x, dispCoords.y, dispCoords.z);
+
+                    // Dynamic orientation yaw configurations
+                    let actualHeadingAngle = Math.atan2(ac.phys_vel.z, ac.phys_vel.x);
+                    ac.mesh.rotation.y = -actualHeadingAngle + Math.PI / 2;
+
+                    // Electronic sweeping beam intersection target highlights
+                    const currentSweepAngle = (sweeper.rotation.z) % (Math.PI * 2);
+                    const acAngle = Math.atan2(dispCoords.z, dispCoords.x);
+                    if (Math.abs(currentSweepAngle - acAngle) < 0.2) {
+                        ac.mesh.children.forEach(part => part.material.color.setHex(0x00ffda));
+                    } else {
+                        ac.mesh.children.forEach(part => part.material.color.setHex(0x00bc56));
+                    }
                 } else {
-                    ac.mesh.children.forEach(part => part.material.color.setHex(0x00bc56));
+                    // Instantly drop target rendering visibility if out of selected instrument range bounds
+                    ac.mesh.visible = false;
                 }
             });
-
-            if (activeWarnings.length > 0) {            // TRIGGER WARNING TICKER HUD EVENTS
-            if (activeWarnings.length > 0) {
-                warningBanner.style.display = "block";
-                warningBanner.innerText = `⚠️ [TCAS HAZARD]: ${activeWarnings.join(" | ")}`;
-            } else {
-                warningBanner.style.display = "none";
-            }
 
             renderer.render(scene, camera);
         }
 
         animate();
 
-        // Responsive display boundary update listener
         window.addEventListener('resize', () => {
             camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
