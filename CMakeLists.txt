@@ -6,8 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
 
+# Simply added the new Arcade source file to the executable bundle list here
 add_executable(SpatialRadarExe 
     src/main.cpp 
     src/Aircraft.cpp 
     src/RadarSystem.cpp
+    src/ArcadeEvents.cpp
 )
