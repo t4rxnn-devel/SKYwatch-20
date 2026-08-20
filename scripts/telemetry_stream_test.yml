@@ -1,0 +1,35 @@
+# SkyWatch-20 Automated Industrial Integration Test Configuration
+# Target Suite: Telemetry Streaming and Solver Bounds Verification
+
+test_suite_metadata:
+  suite_id: "SW20-VAL-042"
+  environment: "Automated Laboratory Regression Bench"
+  target_build: "Release-v3.0-RKF45"
+
+test_cases:
+  - id: "TC_001_SUPERSONIC_ESCAPE_BOUNDS"
+    description: "Verify IMM-UKF matrix convergence on a Mach 3 target vector executing sharp corridor heading changes."
+    input_parameters:
+      target_callsign: "M3_TARGET"
+      initial_velocity_knots: 1980.0
+      initial_position_nm: { x: -24.0, y: -24.0, z: 8.5 }
+      simulation_duration_steps: 500
+    expected_outputs:
+      max_filter_yaw_error_deg: 0.05
+      rkf45_step_size_min_seconds: 0.0005
+    pass_criteria:
+      assert_no_infinity_overflows: true
+      assert_filter_lock_maintained: true
+
+  - id: "TC_002_STORM_CELL_FLUID_INJECTION"
+    description: "Verify that entering severe Navier-Stokes turbulence fields correctly triggers localized crosswind vector adjustments."
+    input_parameters:
+      target_callsign: "TEST_FLIGHT"
+      initial_velocity_knots: 450.0
+      initial_position_nm: { x: 8.0, y: 6.0, z: 1.5 } # Center of Doppler Storm Cell
+      simulation_duration_steps: 100
+    expected_outputs:
+      trigger_warning_banner: true
+      assert_induced_roll_vibration: true
+    pass_criteria:
+      assert_log_exporter_binary_output: true
