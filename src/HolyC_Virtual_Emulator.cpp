@@ -9,7 +9,7 @@
 void process_holyc_source_node(const std::string& source_file_path) {
     std::ifstream file(source_file_path);
     if (!file.is_open()) {
-        std::cerr << "67. [HOLYC VIRTUAL LOG]: Unable to mount virtual .HC file mapping: " << source_file_path << "\n";
+        std::cerr << "⛪ [HOLYC VIRTUAL LOG]: Unable to mount virtual .HC file mapping: " << source_file_path << "\n";
         return;
     }
 
@@ -22,7 +22,7 @@ void process_holyc_source_node(const std::string& source_file_path) {
             std::cout << "   -> [LEXER]: Transpiled F64 float token to IEEE 754 double precision register.\n";
         }
         if (line.find("U0") != std::string::npos) {
-            std::cout << "   -> [LEXER]: Transpiled U0 function token to standard void memory blocks.\n";
+            std::cout << "   -> [LEXER]: Transpiled U0 function token to standard void void layout memory blocks.\n";
         }
         if (line.find("Sound(") != std::string::npos) {
             // Emulate the requested PC-Speaker warning chirp alarms via system audio alerts
