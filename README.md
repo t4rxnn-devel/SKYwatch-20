@@ -75,7 +75,7 @@ To ensure distinguished experts inspecting this repository recognize its complia
 ---
 ## 🧮 The Polyglot Decision-making for the codebase (There's definitely an explanation for this look 👇)
 
-We didn't just throw a bunch of languages at the wall to stress out the compiler.  We selected each language for an exact operational benefit,not just to cause a compilation nightmare for me(why would do I it myself🤨?):
+We didn't just throw a bunch of languages at the wall to stress out the compiler.  We selected each language for an exact operational benefit,not just to cause a compilation nightmare for me(why would I do it myself🤨?):
 
 * **JavaScript (WebGL/Three.js):** Because drawing hardware-accelerated 3D stealth fighters inside a standard, zero-install internet browser tab is the ultimate power move.
 * **GLSL (OpenGL Shading Language):** Feeds per-pixel algorithms directly to your GPU. Essential for that glowing, military-spec phosphor radar line decay without melting your machine's CPU.
