@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyWatch-20 Tactical Display Radar</title>
+    <style>
+        body {
+            background-color: #020f05;
+            color: #00ff78;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+        h1 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #00ff78;
+        }
+        p {
+            margin: 5px 0 15px 0;
+            font-size: 12px;
+            color: rgba(0, 255, 120, 0.6);
+        }
+        #radar-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            border: 2px solid #005000;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0, 255, 120, 0.1);
+            background-color: #020f05;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+        }
+        #control-panel {
+            margin-top: 25px;
+            width: 580px;
+            background: rgba(0, 30, 5, 0.6);
+            border: 1px solid #005000;
+            padding: 15px;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            box-shadow: 0 0 10px rgba(0, 255, 120, 0.05);
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            color: rgba(0, 255, 120, 0.8);
+        }
+        input {
+            background: #020f05;
+            border: 1px solid #008000;
+            color: #00ff78;
+            padding: 6px;
+            font-family: inherit;
+            font-size: 13px;
+            border-radius: 2px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #00ff78;
+            box-shadow: 0 0 5px rgba(0, 255, 120, 0.3);
+        }
+        button {
+            grid-column: span 2;
+            background: #005000;
+            border: 1px solid #00ff78;
+            color: #00ff78;
+            padding: 8px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #00ff78;
+            color: #020f05;
+            box-shadow: 0 0 10px #00ff78;
+        }
+    </style>
+</head>
+<body>
+    <h1>=== SKYWATCH-20 TACTICAL INTERFACE ===</h1>
+    <p>Live Multi-Language Physics Engine Deployment Array</p>
+    
+    <div id="radar-container">
+        <canvas id="radarCanvas" width="600" height="600"></canvas>
+    </div>
+
+    <!-- NEW CONTROL PANEL ELEMENT -->
+    <div id="control-panel">
+        <div class="form-group">
+            <label for="flightId">Callsign / Flight ID</label>
+            <input type="text" id="flightId" value="SKY-01" max-length="7">
+        </div>
+        <div class="form-group">
+            <label for="altitude">Altitude (FT / 1000)</label>
+            <input type="number" id="altitude" value="6.5" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="posX">Initial Position X (NM)</label>
+            <input type="number" id="posX" value="-20" min="-24" max="24">
+        </div>
+        <div class="form-group">
+            <label for="posY">Initial Position Y (NM)</label>
+            <input type="number" id="posY" value="-20" min="-24" max="24">
+        </div>
+        <button id="spawnBtn">Inject Target Vector</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        
+        let sweepAngle = 0;
+        
+        // Initial registered aircraft array profiles [1]
+        let fleet = [
+            { id: "UAL104", x: -15, y: -15, vx: 0.1, vy: 0.1, alt: 5.0 },
+            { id: "AAL892", x: 15, y: 15, vx: -0.09, vy: -0.09, alt: 4.9 },
+            { id: "DAL440", x: -18, y: 10, vx: 0.12, vy: -0.05, alt: 6.2 }
+        ];
+
+        let storms = [
+            { x: 8, y: 6, radius: 4 },
+            { x: -10, y: -8, radius: 5 }
+        ];
+
+        // Button handling event listener to spawn planes onto tracking array
+        document.getElementById('spawnBtn').addEventListener('click', () => {
+            const id = document.getElementById('flightId').value.toUpperCase().trim() || "UNK";
+            const alt = parseFloat(document.getElementById('altitude').value) || 5.0;
+            const x = parseFloat(document.getElementById('posX').value) || 0;
+            const y = parseFloat(document.getElementById('posY').value) || 0;
+            
+            // Calculate a trajectory heading pointing roughly back toward the center tower anchor
+            const angleToCenter = Math.atan2(-y, -x);
+            const speedScale = 0.1; 
+            const vx = Math.cos(angleToCenter) * speedScale;
+            const vy = Math.sin(angleToCenter) * speedScale;
+
+            fleet.push({ id, x, y, vx, vy, alt });
+        });
+
+        function drawRadar() {
+            ctx.fillStyle = 'rgba(2, 15, 5, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Concentric CAD Ring Overlay Markers [1]
+            ctx.strokeStyle = 'rgba(0, 100, 0, 0.4)';
+            ctx.lineWidth = 1;
+            for (let r = 50; r <= 280; r += 60) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                ctx.stroke();
+            }
+
+            // Crosshair Vector Grid Axes [1]
+            ctx.beginPath();
+            ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
+            ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
+            ctx.stroke();
+
+            // 2. Render Severe Weather Cells (Doppler Signatures) [1]
+            storms.forEach(storm => {
+                ctx.fillStyle = 'rgba(200, 50, 0, 0.02)';
+                ctx.strokeStyle = 'rgba(255, 60, 0, 0.05)';
+                ctx.beginPath();
+                ctx.arc(cx + (storm.x * 12), cy - (storm.y * 12), storm.radius * 12, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            });
+
+            // 3. Independent Physics Solver Loop Execution [1]
+            fleet.forEach(ac => {
+                ac.x += ac.vx * 0.1;
+                ac.y += ac.vy * 0.1;
+
+                // Handle boundary limits wrap vectors [1]
+                if (Math.abs(ac.x) > 24) ac.x = -ac.x;
+                if (Math.abs(ac.y) > 24) ac.y = -ac.y;
+
+                let sx = cx + (ac.x * 12);
+                let sy = cy - (ac.y * 12);
+
+                // Check sweeping arc distance values to trigger active glow states [1]
+                let targetAngle = Math.atan2(ac.y, ac.x);
+                if (targetAngle < 0) targetAngle += 2 * Math.PI;
+                let diff = Math.abs(sweepAngle - targetAngle);
+                
+                if (diff < 0.2) {
+                    ctx.fillStyle = '#00ffda'; // Active sweep collision target highlight (Cyan) [1]
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = '#00ffda';
+                } else {
+                    ctx.fillStyle = ac.alt > 5.0 ? '#00ff78' : '#00bc56';
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.fillRect(sx - 3, sy - 3, 6, 6);
+                
+                // Track callsign telemetry texts [1]
+                ctx.fillStyle = 'rgba(0, 255, 120, 0.6)';
+                ctx.font = '10px monospace';
+                ctx.fillText(ac.id, sx + 8, sy + 3);
+            });
+            ctx.shadowBlur = 0; // Reset canvas properties [1]
+
+            // 4. Sweep Ray Tracing Line Configuration [1]
+            let targetX = cx + 290 * Math.cos(sweepAngle);
+            let targetY = cy - 290 * Math.sin(sweepAngle);
+            
+            let gradient = ctx.createLinearGradient(cx, cy, targetX, targetY);
+            gradient.addColorStop(0, 'rgba(0, 255, 100, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 255, 100, 0)');
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+
+            // Increment rotation angles variables [1]
+            sweepAngle += 0.015;
+            if (sweepAngle >= 2 * Math.PI) sweepAngle -= 2 * Math.PI;
+
+            requestAnimationFrame(drawRadar);
+        }
+
+        drawRadar();
+    </script>
+</body>
+</html>
