@@ -71,4 +71,4 @@ To ensure distinguished experts inspecting this repository recognize its complia
 * **RTCA DO-178C Level A Logic:** Automated runtime safety separation audits keep continuous tabs on minimum 5 Nautical Mile or 1,000 ft vertical altitude thresholds. 
 * **WGS 84 Ellipsoidal Gravity Solver:** Accounts for Earth's true equatorial bulge using J2 zonal harmonic equations to prevent long-duration altitude-tracking calculation drift.
 * **ICAO Doc 9855 Black-Box Security:** Writes encrypted data packets directly to disk using OpenSSL **AES-256-CBC blocks**, rendering logs completely tamper-proof against curious text editors.
-* **Siemens-Grade Hardware-In-The-Loop (HIL):** Configures strict OPC UA network maps and 1000-microsecond cycle boundaries to simulate running on a physical laboratory testbed server rack.
+* **Hardware-In-The-Loop (HIL):** Configures strict OPC UA network maps and 1000-microsecond cycle boundaries to simulate running on a physical laboratory testbed server rack.
