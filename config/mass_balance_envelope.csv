@@ -1,0 +1,13 @@
+# SkyWatch-20 Structural Airworthiness Configuration Matrix
+# Asset Profile: Advanced Tactical Fighter Variant (F-22 Spec)
+# Feature: Center of Gravity (CG) Envelope Bounds vs Gross Weight (KG)
+GrossWeight_KG,Forward_CG_Limit_MAC,Aft_CG_Limit_MAC,Max_Structural_G_Limit
+15000,0.185,0.320,9.0
+18000,0.190,0.335,9.0
+22000,0.210,0.340,8.2
+25000,0.235,0.345,7.0
+29000,0.260,0.350,5.5
+# Operational Limitation Annotations
+# MAC = Mean Aerodynamic Chord percentage.
+# Exceeding Forward CG results in extreme nose-heavy trim stall thresholds.
+# Exceeding Aft CG results in aerodynamic pitch instability and spin divergence.
