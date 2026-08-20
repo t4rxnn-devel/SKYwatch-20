@@ -1,0 +1,25 @@
+{
+  "hardware_in_the_loop_profile": {
+    "target_platform": "Siemens Simatic S7-1500 / Industrial PC Core",
+    "simulation_mode": "Hard-Real-Time (HIL)",
+    "clock_synchronization": {
+      "bus_protocol": "EtherCAT / PROFINET IRT",
+      "cycle_time_microseconds": 1000,
+      "max_jitter_allowance_nanoseconds": 250
+    },
+    "hardware_io_mapping": {
+      "primary_radar_feed_input": {
+        "interface_type": "OPC_UA_Client",
+        "endpoint_url": "opc.tcp://192.168.1.150:4840",
+        "node_id_x_coords": "ns=2;s=Radar_Raw_X",
+        "node_id_y_coords": "ns=2;s=Radar_Raw_Y"
+      },
+      "tcas_alert_relay_output": {
+        "interface_type": "Digital_Output_Module",
+        "hardware_address": "%%QX0.0",
+        "voltage_level": "24V_DC",
+        "trigger_state": "Normally_Open"
+      }
+    }
+  }
+}
