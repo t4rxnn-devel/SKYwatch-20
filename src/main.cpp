@@ -49,7 +49,7 @@ int main() {
     // 3. Initialize a genuine POSIX UDP Network Socket Server
     int server_fd;
     struct sockaddr_in address{};
-    char buffer[1024] = {0};
+    char buffer[256] = {0};
 
     if ((server_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         std::cerr << "❌ [SOCKET ERROR]: Failed to construct network bus layers.\n";
@@ -99,7 +99,7 @@ int main() {
 
     close(server_fd);
     std::cout << "\n=========================================================\n";
-    std::cout << "✅ IPC NETWORK SYNCHRONIZATION TEST SUITE VERIFIED PASSED\n";
+    std::cout << "Base IPC NETWORK SYNCHRONIZATION TEST SUITE VERIFIED PASSED\n";
     std::cout << "=========================================================\n";
     return 0;
 }
