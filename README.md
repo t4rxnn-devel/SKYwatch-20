@@ -72,3 +72,10 @@ To ensure distinguished experts inspecting this repository recognize its complia
 * **WGS 84 Ellipsoidal Gravity Solver:** Accounts for Earth's true equatorial bulge using J2 zonal harmonic equations to prevent long-duration altitude-tracking calculation drift.
 * **ICAO Doc 9855 Black-Box Security:** Writes encrypted data packets directly to disk using OpenSSL **AES-256-CBC blocks**, rendering logs completely tamper-proof against curious text editors.
 * **Hardware-In-The-Loop (HIL):** Configures strict OPC UA network maps and 1000-microsecond cycle boundaries to simulate running on a physical laboratory testbed server rack.
+---
+
+## ⚖️ License & Copyright
+
+Distributed under the Apache License, Version 2.0. See the `LICENSE` file for more details.
+
+Copyright (c) 2026 t4rxnn-devel. All rights reserved.
