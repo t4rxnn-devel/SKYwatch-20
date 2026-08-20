@@ -20,12 +20,12 @@ add_custom_command(
 
 add_custom_target(tcas_rust_binary DEPENDS ${RUST_LIB_PATH})
 
-# 2. Compile native C++ tracking execution engines
-# NOTICE: .HC, .py, .m, and .wln files are strictly omitted from this target.
+# 2. Dynamically gather all C++ implementation files from src/
+# NOTICE: HolyC (.HC), Python (.py), MATLAB (.m), and Wolfram (.wln) are automatically excluded.
+file(GLOB CPP_SOURCES "src/*.cpp")
+
 add_executable(SpatialRadarExe
-    src/main.cpp
-    src/ImmUkfTracker.cpp
-    src/AirspaceManager.cpp
+    ${CPP_SOURCES}
 )
 
 # Enforce clean sequential dependency building
