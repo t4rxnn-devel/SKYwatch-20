@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SkyWatch-20 Functional Mock-up Unit (FMU) Model Description -->
+<!-- Compliant with the Functional Mock-up Interface (FMI) 3.0 Co-Simulation Specification -->
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName="SkyWatch_RK4_Aerodynamics_Solver"
+  instantiationToken="{8c7b41a2-e612-4cfc-b8e1-7d1337ff2026}"
+  description="High-Precision 4th-Order Runge-Kutta Aerospace Solver for Enterprise PLM Environments"
+  generationTool="SkyWatch Toolchain Exporter"
+  numberOfContinuousStates="6">
+
+  <coSimulation
+    modelIdentifier="SkyWatch_RK4_Aerodynamics_Solver"
+    canHandleVariableCommunicationStepSize="true"
+    canInterpolateInputs="true"
+    maxOutputDerivativeOrder="1"/>
+
+  <!-- Mapping of our core physics structural parameters to industrial software inputs/outputs -->
+  <modelVariables>
+    <!-- Inputs: Environmental Fluid Forces -->
+    <Float64 name="wind_shear_x" valueReference="1" causality="input" variability="discrete">
+      <Dimension start="1"/>
+    </Float64>
+    <Float64 name="wind_shear_y" valueReference="2" causality="input" variability="discrete">
+      <Dimension start="1"/>
+    </Float64>
+
+    <!-- Outputs: Highly Refined Kinematic State Vectors -->
+    <Float64 name="solved_position_x" valueReference="10" causality="output" variability="continuous">
+      <Dimension start="1"/>
+    </Float64>
+    <Float64 name="solved_position_y" valueReference="11" causality="output" variability="continuous">
+      <Dimension start="1"/>
+    </Float64>
+    <Float64 name="solved_altitude_z" valueReference="12" causality="output" variability="continuous">
+      <Dimension start="1"/>
+    </Float64>
+    <Float64 name="computed_drag_coefficient" valueReference="13" causality="output" variability="continuous">
+      <Dimension start="1"/>
+    </Float64>
+  </modelVariables>
+</fmiModelDescription>
