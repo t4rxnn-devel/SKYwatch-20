@@ -4,6 +4,7 @@ project(SKYwatch20 VERSION 3.5 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Configure include directory boundaries for our header files
 include_directories(include)
 
 # 1. Background custom compilation directive compiling Rust to static binaries
@@ -21,6 +22,9 @@ add_custom_command(
 add_custom_target(tcas_rust_binary DEPENDS ${RUST_LIB_PATH})
 
 # 2. Compile native C++ tracking execution engines
+# CRITICAL FIX: We explicitly list ONLY the .cpp files here. 
+# The HolyRadarCore.HC and DivineCollision.HC scripts are entirely excluded 
+# from this list so standard system compilers never touch or parse them.
 add_executable(SpatialRadarExe 
     src/main.cpp 
     src/ImmUkfTracker.cpp
