@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyWatch-20 Tactical Display Radar</title>
+    <title>SkyWatch-20 3D Tactical Interface System</title>
     <style>
         body {
-            background-color: #020f05;
+            background-color: #010803;
             color: #00ff78;
             font-family: 'Courier New', Courier, monospace;
             display: flex;
@@ -29,24 +29,19 @@
             font-size: 12px;
             color: rgba(0, 255, 120, 0.6);
         }
-        #radar-container {
+        #radar-viewport {
             position: relative;
-            width: 600px;
+            width: 700px;
             height: 600px;
             border: 2px solid #005000;
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(0, 255, 120, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0, 255, 120, 0.15);
             background-color: #020f05;
-        }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-radius: 50%;
+            overflow: hidden;
         }
         #control-panel {
-            margin-top: 25px;
-            width: 580px;
+            margin-top: 20px;
+            width: 670px;
             background: rgba(0, 30, 5, 0.6);
             border: 1px solid #005000;
             padding: 15px;
@@ -54,206 +49,242 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            box-shadow: 0 0 10px rgba(0, 255, 120, 0.05);
         }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-            color: rgba(0, 255, 120, 0.8);
-        }
-        input {
-            background: #020f05;
-            border: 1px solid #008000;
-            color: #00ff78;
-            padding: 6px;
-            font-family: inherit;
-            font-size: 13px;
-            border-radius: 2px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #00ff78;
-            box-shadow: 0 0 5px rgba(0, 255, 120, 0.3);
-        }
-        button {
-            grid-column: span 2;
-            background: #005000;
-            border: 1px solid #00ff78;
-            color: #00ff78;
-            padding: 8px;
-            font-family: inherit;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-radius: 2px;
-            transition: all 0.2s ease;
-        }
-        button:hover {
-            background: #00ff78;
-            color: #020f05;
-            box-shadow: 0 0 10px #00ff78;
-        }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 11px; text-transform: uppercase; margin-bottom: 4px; color: rgba(0, 255, 120, 0.8); }
+        input { background: #020f05; border: 1px solid #008000; color: #00ff78; padding: 6px; font-family: inherit; font-size: 13px; }
+        input:focus { outline: none; border-color: #00ff78; }
+        button { grid-column: span 2; background: #005000; border: 1px solid #00ff78; color: #00ff78; padding: 10px; font-family: inherit; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 2px; }
+        button:hover { background: #00ff78; color: #020f05; box-shadow: 0 0 10px #00ff78; }
     </style>
+    <!-- Include Three.js via CDN for 3D Hardware Accelerated Rendering -->
+    <script src="https://cloudflare.com"></script>
 </head>
 <body>
-    <h1>=== SKYWATCH-20 TACTICAL INTERFACE ===</h1>
-    <p>Live Multi-Language Physics Engine Deployment Array</p>
+    <h1>=== SKYWATCH-20 3D TACTICAL INTERFACE ===</h1>
+    <p>Hardware Accelerated CAD Modeling Environment</p>
     
-    <div id="radar-container">
-        <canvas id="radarCanvas" width="600" height="600"></canvas>
-    </div>
+    <div id="radar-viewport"></div>
 
-    <!-- NEW CONTROL PANEL ELEMENT -->
     <div id="control-panel">
         <div class="form-group">
             <label for="flightId">Callsign / Flight ID</label>
-            <input type="text" id="flightId" value="SKY-01" max-length="7">
+            <input type="text" id="flightId" value="F-22" maxlength="7">
         </div>
         <div class="form-group">
             <label for="altitude">Altitude (FT / 1000)</label>
-            <input type="number" id="altitude" value="6.5" step="0.1">
+            <input type="number" id="altitude" value="8.0" step="0.5">
         </div>
         <div class="form-group">
-            <label for="posX">Initial Position X (NM)</label>
-            <input type="number" id="posX" value="-20" min="-24" max="24">
+            <label for="posX">Initial X Vector (NM)</label>
+            <input type="number" id="posX" value="-15">
         </div>
         <div class="form-group">
-            <label for="posY">Initial Position Y (NM)</label>
-            <input type="number" id="posY" value="-20" min="-24" max="24">
+            <label for="posY">Initial Y Vector (NM)</label>
+            <input type="number" id="posY" value="-15">
         </div>
-        <button id="spawnBtn">Inject Target Vector</button>
+        <button id="spawnBtn">Inject Jet Fighter Target Vector</button>
     </div>
 
     <script>
-        const canvas = document.getElementById('radarCanvas');
-        const ctx = canvas.getContext('2d');
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
+        // --- 1. INITIALIZE THREE.JS 3D ENGINE GRAPHICS MATRIX ---
+        const container = document.getElementById('radar-viewport');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020f05);
         
-        let sweepAngle = 0;
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        // Position camera overhead at an isometric perspective angle for strategic visualization
+        camera.position.set(0, 35, 45);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // Illuminations Layout Matrix
+        const ambientLight = new THREE.AmbientLight(0x004411);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0x00ff78, 0.8);
+        directionalLight.position.set(5, 20, 5);
+        scene.add(directionalLight);
+
+        // --- 2. GENERATE CONCENTRIC CAD RADAR GRIDS ---
+        const gridGroup = new THREE.Group();
+        const gridMaterial = new THREE.LineBasicMaterial({ color: 0x004411 });
         
-        // Initial registered aircraft array profiles [1]
-        let fleet = [
-            { id: "UAL104", x: -15, y: -15, vx: 0.1, vy: 0.1, alt: 5.0 },
-            { id: "AAL892", x: 15, y: 15, vx: -0.09, vy: -0.09, alt: 4.9 },
-            { id: "DAL440", x: -18, y: 10, vx: 0.12, vy: -0.05, alt: 6.2 }
-        ];
-
-        let storms = [
-            { x: 8, y: 6, radius: 4 },
-            { x: -10, y: -8, radius: 5 }
-        ];
-
-        // Button handling event listener to spawn planes onto tracking array
-        document.getElementById('spawnBtn').addEventListener('click', () => {
-            const id = document.getElementById('flightId').value.toUpperCase().trim() || "UNK";
-            const alt = parseFloat(document.getElementById('altitude').value) || 5.0;
-            const x = parseFloat(document.getElementById('posX').value) || 0;
-            const y = parseFloat(document.getElementById('posY').value) || 0;
-            
-            // Calculate a trajectory heading pointing roughly back toward the center tower anchor
-            const angleToCenter = Math.atan2(-y, -x);
-            const speedScale = 0.1; 
-            const vx = Math.cos(angleToCenter) * speedScale;
-            const vy = Math.sin(angleToCenter) * speedScale;
-
-            fleet.push({ id, x, y, vx, vy, alt });
-        });
-
-        function drawRadar() {
-            ctx.fillStyle = 'rgba(2, 15, 5, 0.08)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 1. Concentric CAD Ring Overlay Markers [1]
-            ctx.strokeStyle = 'rgba(0, 100, 0, 0.4)';
-            ctx.lineWidth = 1;
-            for (let r = 50; r <= 280; r += 60) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-                ctx.stroke();
+        for (let r = 5; r <= 25; r += 5) {
+            const points = [];
+            for (let i = 0; i <= 64; i++) {
+                const theta = (i / 64) * Math.PI * 2;
+                points.push(new THREE.Vector3(Math.cos(theta) * r, 0, Math.sin(theta) * r));
             }
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const circle = new THREE.Line(geometry, gridMaterial);
+            gridGroup.add(circle);
+        }
+        
+        // Axis Crosshairs
+        const axisMat = new THREE.LineBasicMaterial({ color: 0x002205 });
+        const xGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-30, 0, 0), new THREE.Vector3(30, 0, 0)]);
+        const zGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, -30), new THREE.Vector3(0, 0, 30)]);
+        gridGroup.add(new THREE.Line(xGeo, axisMat), new THREE.Line(zGeo, axisMat));
+        scene.add(gridGroup);
 
-            // Crosshair Vector Grid Axes [1]
-            ctx.beginPath();
-            ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
-            ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
-            ctx.stroke();
-
-            // 2. Render Severe Weather Cells (Doppler Signatures) [1]
-            storms.forEach(storm => {
-                ctx.fillStyle = 'rgba(200, 50, 0, 0.02)';
-                ctx.strokeStyle = 'rgba(255, 60, 0, 0.05)';
-                ctx.beginPath();
-                ctx.arc(cx + (storm.x * 12), cy - (storm.y * 12), storm.radius * 12, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.stroke();
+        // --- 3. PROCEDURAL CAD HIGH-REALISM AIRCRAFT GENERATOR ---
+        // Creates a clean, realistic twin-engine stealth fighter geometry via code primitives
+        function createCadAircraftMesh() {
+            const aircraftGroup = new THREE.Group();
+            const hullMat = new THREE.MeshStandardMaterial({ 
+                color: 0x00bc56, 
+                roughness: 0.4, 
+                metalness: 0.8,
+                flatShading: true 
             });
 
-            // 3. Independent Physics Solver Loop Execution [1]
-            fleet.forEach(ac => {
-                ac.x += ac.vx * 0.1;
-                ac.y += ac.vy * 0.1;
+            // Jet Fuselage Structure
+            const bodyGeo = new THREE.ConeGeometry(0.4, 3, 4);
+            bodyGeo.rotateX(Math.PI / 2);
+            const body = new THREE.Mesh(bodyGeo, hullMat);
+            aircraftGroup.add(body);
 
-                // Handle boundary limits wrap vectors [1]
-                if (Math.abs(ac.x) > 24) ac.x = -ac.x;
-                if (Math.abs(ac.y) > 24) ac.y = -ac.y;
+            // Main Delta Wings Shape
+            const wingShape = new THREE.Shape();
+            wingShape.moveTo(0, 0);
+            wingShape.lineTo(2.5, -1.2);
+            wingShape.lineTo(0.5, -1.8);
+            wingShape.lineTo(0, -1.8);
 
-                let sx = cx + (ac.x * 12);
-                let sy = cy - (ac.y * 12);
-
-                // Check sweeping arc distance values to trigger active glow states [1]
-                let targetAngle = Math.atan2(ac.y, ac.x);
-                if (targetAngle < 0) targetAngle += 2 * Math.PI;
-                let diff = Math.abs(sweepAngle - targetAngle);
-                
-                if (diff < 0.2) {
-                    ctx.fillStyle = '#00ffda'; // Active sweep collision target highlight (Cyan) [1]
-                    ctx.shadowBlur = 12;
-                    ctx.shadowColor = '#00ffda';
-                } else {
-                    ctx.fillStyle = ac.alt > 5.0 ? '#00ff78' : '#00bc56';
-                    ctx.shadowBlur = 0;
-                }
-
-                ctx.fillRect(sx - 3, sy - 3, 6, 6);
-                
-                // Track callsign telemetry texts [1]
-                ctx.fillStyle = 'rgba(0, 255, 120, 0.6)';
-                ctx.font = '10px monospace';
-                ctx.fillText(ac.id, sx + 8, sy + 3);
-            });
-            ctx.shadowBlur = 0; // Reset canvas properties [1]
-
-            // 4. Sweep Ray Tracing Line Configuration [1]
-            let targetX = cx + 290 * Math.cos(sweepAngle);
-            let targetY = cy - 290 * Math.sin(sweepAngle);
+            const wingExtrudeSettings = { depth: 0.05, bevelEnabled: false };
+            const wingGeo = new THREE.ExtrudeGeometry(wingShape, wingExtrudeSettings);
+            wingGeo.rotateX(Math.PI / 2);
             
-            let gradient = ctx.createLinearGradient(cx, cy, targetX, targetY);
-            gradient.addColorStop(0, 'rgba(0, 255, 100, 0.4)');
-            gradient.addColorStop(1, 'rgba(0, 255, 100, 0)');
+            const rightWing = new THREE.Mesh(wingGeo, hullMat);
+            const leftWing = new THREE.Mesh(wingGeo, hullMat);
+            leftWing.scale.x = -1; // Flip wing structure along mirror coordinates
+            aircraftGroup.add(rightWing, leftWing);
+
+            // Twin Vertical Stabilizer Fins
+            const finShape = new THREE.Shape();
+            finShape.moveTo(0, 0);
+            finShape.lineTo(0, 0.8);
+            finShape.lineTo(-0.5, 0.8);
+            finShape.lineTo(-0.8, 0);
             
-            ctx.strokeStyle = gradient;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(targetX, targetY);
-            ctx.stroke();
+            const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.04, bevelEnabled: false });
+            finGeo.rotateY(Math.PI / 2);
+            
+            const finRight = new THREE.Mesh(finGeo, hullMat);
+            finRight.position.set(0.3, 0.1, -1.2);
+            finRight.rotation.z = -0.2; // Angle stabilizers outwards like an F-22 Raptor
+            
+            const finLeft = new THREE.Mesh(finGeo, hullMat);
+            finLeft.position.set(-0.3, 0.1, -1.2);
+            finLeft.rotation.z = 0.2;
+            aircraftGroup.add(finRight, finLeft);
 
-            // Increment rotation angles variables [1]
-            sweepAngle += 0.015;
-            if (sweepAngle >= 2 * Math.PI) sweepAngle -= 2 * Math.PI;
-
-            requestAnimationFrame(drawRadar);
+            return aircraftGroup;
         }
 
-        drawRadar();
+        // --- 4. ENGINE TRACKING FLEET MATRIX CAPABILITIES ---
+        let fleet = [];
+
+        function spawnAircraft(id, x, z, alt) {
+            const mesh = createCadAircraftMesh();
+            scene.add(mesh);
+
+            // Calculate flight direction towards tracking radar center point coordinate anchor
+            const angleToCenter = Math.atan2(-z, -x);
+            const speed = 0.04;
+
+            fleet.push({
+                id: id,
+                mesh: mesh,
+                pos: new THREE.Vector3(x, alt, z),
+                vel: new THREE.Vector3(Math.cos(angleToCenter) * speed, 0, Math.sin(angleToCenter) * speed),
+                targetRotationY: angleToCenter + Math.PI / 2,
+                currentRoll: 0,
+                altitude: alt
+            });
+        }
+
+        // Setup Initial Standard Fleet Operations Paths
+        spawnAircraft("UAL104", -18, -12, 4.0);
+        spawnAircraft("AAL892", 16, 14, 5.5);
+        spawnAircraft("DAL440", -14, 18, 3.2);
+
+        // UI Event Hook to inject custom profiles dynamically
+        document.getElementById('spawnBtn').addEventListener('click', () => {
+            const id = document.getElementById('flightId').value.toUpperCase().trim() || "UNK";
+            const alt = parseFloat(document.getElementById('altitude').value) / 2.0 || 4.0; // Scaled altitude metric
+            const x = parseFloat(document.getElementById('posX').value) || 0;
+            const z = parseFloat(document.getElementById('posY').value) || 0;
+            spawnAircraft(id, x, z, alt);
+        });
+
+        // --- 5. SWEEPER RADAR BEAM CONE ---
+        const sweepGeometry = new THREE.ConeGeometry(32, 0.1, 32, 1, true, 0, 0.15);
+        const sweepMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00ff78, 
+            transparent: true, 
+            opacity: 0.15, 
+            side: THREE.DoubleSide 
+        });
+        const sweeper = new THREE.Mesh(sweepGeometry, sweepMaterial);
+        sweeper.rotateX(Math.PI / 2);
+        scene.add(sweeper);
+
+        // --- 6. REALISTIC KINEMATICS PHYSICS LOOP ANIMATION ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            // Rotate main electronic sweep scanner line
+            sweeper.rotation.z -= 0.6 * delta;
+
+            fleet.forEach(ac => {
+                // Update 3D coordinates based on independent velocity vector values
+                ac.pos.add(ac.vel);
+
+                // Re-route if boundaries metrics crossed
+                if (ac.pos.length() > 30) {
+                    ac.pos.set(-ac.pos.x, ac.pos.y, -ac.pos.z);
+                }
+
+                // Apply values directly into three mesh model matrices
+                ac.mesh.position.copy(ac.pos);
+
+                // HIGH-REALISM MOTION MATRIX: Interpolate rotation yaw angles smoothly
+                ac.mesh.rotation.y = THREE.MathUtils.lerp(ac.mesh.rotation.y, ac.targetRotationY, 0.05);
+
+                // HIGH-REALISM BANKING INTERACTION: Simulate realistic roll posture changes as they move
+                const movementAngle = Math.sin(clock.getElapsedTime() * 1.5) * 0.15;
+                ac.mesh.rotation.z = THREE.MathUtils.lerp(ac.mesh.rotation.z, movementAngle, 0.1);
+                
+                // Track lighting indices dynamically based on sweep intersections angles
+                const currentSweepAngle = (sweeper.rotation.z) % (Math.PI * 2);
+                const acAngle = Math.atan2(ac.pos.z, ac.pos.x);
+                
+                // Flash model colors bright cyan if currently tracked by active scanner beam
+                if (Math.abs(currentSweepAngle - acAngle) < 0.2) {
+                    ac.mesh.children.forEach(part => part.material.color.setHex(0x00ffda));
+                } else {
+                    ac.mesh.children.forEach(part => part.material.color.setHex(0x00bc56));
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Responsive Frame Handler to prevent rendering glitches on window shifts
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
     </script>
 </body>
 </html>
