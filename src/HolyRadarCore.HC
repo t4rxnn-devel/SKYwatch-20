@@ -25,5 +25,5 @@ F64 ComputeHolyDistance(CVector3D *v1, CVector3D *v2)
 
 U0 RenderHolyRadarScope(CAircraftNode *ac)
 {
-  "📡 [TEMPLE-OS RADAR] Target ID: %s \n", ac->callsign;
+  Print("📡 [TEMPLE-OS RADAR] Target ID: %s \n", ac->callsign);
 }
