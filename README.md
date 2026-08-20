@@ -65,7 +65,7 @@ SKYwatch-20/
 
 ## 🛠️ Industrial Airworthiness (The Serious Engineering Bit)
 
-To ensure distinguished experts inspecting this repository recognize its compliance(i hope so 🤞), the architecture includes a genuine aviation-standard implementations:
+To ensure distinguished experts inspecting this repository recognize its compliance(i hope so 🤞), the architecture includes genuine aviation-standard implementations:
 
 * **NATO Link 16 Standard (STANAG 5516):** Serializes tracking states down to a strict, bit-aligned 12-byte raw binary hardware payload (**J3.2 Air Track Messages**). No messy text strings across military radio frequencies.
 * **RTCA DO-178C Level A Logic:** Automated runtime safety separation audits keep continuous tabs on minimum 5 Nautical Mile or 1,000 ft vertical altitude thresholds. 
