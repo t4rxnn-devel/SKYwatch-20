@@ -1,0 +1,146 @@
+/* SkyWatch-20 Console Graphic Layout Stylesheet */
+
+body {
+    background-color: #010803;
+    color: #00ff78;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow-y: auto;
+    padding: 20px 0;
+}
+
+h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px #00ff78;
+}
+
+p {
+    margin: 5px 0 15px 0;
+    font-size: 12px;
+    color: rgba(0, 255, 120, 0.6);
+}
+
+#radar-viewport {
+    position: relative;
+    width: 750px;
+    height: 600px;
+    border: 2px solid #005000;
+    border-radius: 8px;
+    box-shadow: 0 0 25px rgba(0, 255, 120, 0.15);
+    background-color: #020f05;
+    overflow: hidden;
+}
+
+#warning-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 30, 0, 0.2);
+    border-top: 1px solid #ff3300;
+    color: #ff9988;
+    padding: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    box-sizing: border-box;
+    display: none;
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#control-panel {
+    margin-top: 20px;
+    width: 720px;
+    background: rgba(0, 30, 5, 0.6);
+    border: 1px solid #005000;
+    padding: 15px;
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+#matrix-module {
+    grid-column: span 2;
+    border-top: 1px dashed #005000;
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.matrix-row {
+    display: flex;
+    gap: 10px;
+}
+
+.matrix-btn {
+    flex: 1;
+    background: #011805;
+    border: 1px solid #008000;
+    color: #00ff78;
+    padding: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.matrix-btn:hover, .matrix-btn.active {
+    background: #00ff78;
+    color: #020f05;
+    box-shadow: 0 0 8px #00ff78;
+}
+
+.form-group { 
+    display: flex; 
+    flex-direction: column; 
+}
+
+label { 
+    font-size: 11px; 
+    text-transform: uppercase; 
+    margin-bottom: 4px; 
+    color: rgba(0, 255, 120, 0.8); 
+}
+
+input { 
+    background: #020f05; 
+    border: 1px solid #008000; 
+    color: #00ff78; 
+    padding: 6px; 
+    font-family: inherit; 
+    font-size: 13px; 
+}
+
+input:focus { 
+    outline: none; 
+    border-color: #00ff78; 
+}
+
+button.spawn-btn { 
+    grid-column: span 2; 
+    background: #005000; 
+    border: 1px solid #00ff78; 
+    color: #00ff78; 
+    padding: 10px; 
+    font-family: inherit; 
+    font-weight: bold; 
+    cursor: pointer; 
+    text-transform: uppercase; 
+    border-radius: 2px; 
+}
+
+button.spawn-btn:hover { 
+    background: #00ff78; 
+    color: #020f05; 
+    box-shadow: 0 0 10px #00ff78; 
+}
