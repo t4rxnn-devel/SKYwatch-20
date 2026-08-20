@@ -73,6 +73,32 @@ To ensure distinguished experts inspecting this repository recognize its complia
 * **ICAO Doc 9855 Black-Box Security:** Writes encrypted data packets directly to disk using OpenSSL **AES-256-CBC blocks**, rendering logs completely tamper-proof against curious text editors.
 * **Hardware-In-The-Loop (HIL):** Configures strict OPC UA network maps and 1000-microsecond cycle boundaries to simulate running on a physical laboratory testbed server rack.
 ---
+## 🧮 The Polyglot Decision-making for the codebase (There's definitely an explanation for this look 👇)
+
+We didn't just throw a bunch of languages at the wall to stress out the compiler.  We selected each language for an exact operational benefit,not just to cause a compilation nightmare for me(why would do I it myself🤨?):
+
+* **JavaScript (WebGL/Three.js):** Because drawing hardware-accelerated 3D stealth fighters inside a standard, zero-install internet browser tab is the ultimate power move.
+* **GLSL (OpenGL Shading Language):** Feeds per-pixel algorithms directly to your GPU. Essential for that glowing, military-spec phosphor radar line decay without melting your machine's CPU.
+* **C++20 (The Core Engine):** Handles the heavy lifting, high-speed matrix allocations, and safe multi-threaded radar loops without breaking a sweat or wasting a clock cycle.
+* **Rust:** Injected into our safety sub-modules because we need ironclad memory safety when calculating loss-of-separation metrics—rust-proofing our perimeters, literally.
+* **Python (vls.py):** Leverages standard matrix arrays to solve Vortex Lattice aerodynamic lift equations, proving we can compute wing circulation parameters without installing massive frameworks.
+* **MATLAB:** Used for the post-flight analytics, noise filtering, and plotting. It's the standard playground for aerospace telemetry engineers who love matrix math and hate interfaces.
+* **Wolfram Language:** Solves the deep, messy, symbolic differential equations behind our atmospheric turbulence decay curves because nobody wants to solve calculus by hand(SHOUTOUT! Dr. Stephen Wolfram)
+* **Mojo:** A performance addition that automatically unleashes SIMD hardware vectorization across all physical processor cores simultaneously(another SHOUTOUT!!Chris Lattner)
+* **HolyC (TempleOS Utilities):** Added purely to provide divine, kernel-level 3D coordinate logic and PC-speaker alarm chirps. If it's good enough for Terry Davis, it's good enough for our radar perimeters.
+---
+
+## 📚 References (The Aerospace Receipts)
+
+To prove we didn't just guess these aviation tracking parameters, this codebase is backed by legitimate aerospace engineering documentation:
+
+1. **[EUROCONTROL AIXM 5.1 & ASTERIX Cat 062](https://aixm.aero)** – The international standard for airspace data modeling and tracking data exchange formats. 
+2. **[FAA Instrument Procedures Handbook (FAA-H-8083-16B)](https://faa.gov)** – Used to design our terminal instrument approaches, glide slopes, and holding pattern limits.
+3. **[STANAG 5516 (NATO Link 16)](https://nato.int)** – The actual operational specifications governing bit-packed J-Series J3.2 tactical data link messages.
+4. **[RTCA DO-178C (Airborne Systems Software)](https://rtca.org)** – The rigorous safety-critical guideline used to audit tracking code execution and prevent software-induced mid-air collisions.
+5. **[NASA Technical Note (TN D-7650 - Vortex Lattice Method)](https://nasa.gov)** – The mathematical blueprint for computing spanwise wing circulation forces and downwash drag induction profiles.
+
+---
 
 ## ⚖️ License & Copyright
 
