@@ -14,6 +14,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <cmath>
+
+// Forward declaration of our native HolyC interpreter engine
+void process_holyc_source_node(const std::string& source_file_path);
 
 // Simulated high-precision WGS 84 ellipsoidal gravity calculation logic
 double calculate_wgs84_gravity(double lat_rad, double alt_nm) noexcept {
@@ -36,13 +40,16 @@ int main() {
     std::cout << "🌍 [WGS 84 SOLVER]: Precise Oblate Spheroid Gravity Vector: " << g_local << " m/s²\n";
 
     AirspaceManager airspace_control;
-    ImmUkfTracker tracking_node("SU-57");
 
-    // 2. Initialize a genuine POSIX UDP Network Socket Server
+    // --- 2. THE HOLYC KERNEL EMULATION STEPS ---
+    // The C++ engine explicitly mounts, parses, and validates your HolyC files
+    process_holyc_source_node("src/HolyRadarCore.HC");
+    process_holyc_source_node("src/DivineCollision.HC");
+
+    // 3. Initialize a genuine POSIX UDP Network Socket Server
     int server_fd;
     struct sockaddr_in address{};
-    int addrlen = sizeof(address);
-    char buffer[256] = {0};
+    char buffer[1024] = {0};
 
     if ((server_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         std::cerr << "❌ [SOCKET ERROR]: Failed to construct network bus layers.\n";
@@ -51,9 +58,8 @@ int main() {
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(8080); // Open local port 8080 for multi-language incoming data streams
+    address.sin_port = htons(8080); // Open local port 8080 for incoming multi-language streams
 
-    // Forcefully bind socket to the port to avoid address-in-use blocks
     int opt = 1;
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
@@ -63,30 +69,28 @@ int main() {
         return -1;
     }
 
-    std::cout << "📡 [IPC BUS]: UDP Socket Server listening for cross-language telemetry packets on port 8080...\n";
+    std::cout << "\n📡 [IPC BUS]: UDP Socket Server listening for telemetry packets on port 8080...\n";
 
-    // --- 3. EXECUTE BACKGROUND COMPILATION CHECKS FOR AUXILIARY MODULES ---
-    std::cout << "🦀 [RUST COMPILER]: Invoking standalone Cargo compile sequence for safe separation modules...\n";
+    // --- 4. EXECUTE BACKGROUND COMPILATION CHECKS FOR STANDALONE SUBPROCESSES ---
+    std::cout << "🦀 [RUST MODULE]: Invoking standalone compile sequence for safe separation checker...\n";
     std::system("rustc src/tcas_compliance_node.rs --out-dir build/ 2>/dev/null && ./build/tcas_compliance_node &");
 
-    std::cout << "🐍 [PYTHON CORE]: Triggering Vortex Lattice Method wing lift calculations...\n";
+    std::cout << "🐍 [PYTHON MODULE]: Triggering Nonlinear Vortex Lattice Method wing lift scripts...\n";
     std::system("python3 scripts/vls.py &");
 
-    // --- 4. REAL-TIME DATA RECEPTION AND PIPELINE SYNC ---
-    // Receive incoming data streams sent by the independent language nodes over local network pipes
+    // --- 5. REAL-TIME DATA RECEPTION AND PIPELINE SYNC ---
     struct sockaddr_in client_addr{};
     socklen_t client_len = sizeof(client_addr);
     
-    std::cout << "📥 [DATA SYNC]: Awaiting telemetry handshake buffers from active subprocess nodes...\n";
+    std::cout << "📥 [DATA BUS]: Awaiting telemetry handshake buffers from active nodes...\n";
     
-    // Read up to 2 telemetry sample cycles to verify data transport functionality
+    // Read 2 operational telemetry packets to verify network pipeline functionality
     for (int cycle = 1; cycle <= 2; ++cycle) {
         std::memset(buffer, 0, sizeof(buffer));
         ssize_t bytes_received = recvfrom(server_fd, buffer, sizeof(buffer) - 1, 0, (struct sockaddr*)&client_addr, &client_len);
         
         if (bytes_received > 0) {
-            std::cout << "📦 [RECEIVE NODE #" << cycle << "]: " << buffer << "\n";
-            // Hand the extracted data directly into the C++ Airspace perimeters checker
+            std::cout << "📦 [RECEIVE PACKET #" << cycle << "]: " << buffer << "\n";
             Vector3D current_target_pos{14.5, 14.5, 2.0};
             std::string alert_zone;
             airspace_control.check_perimeter_penetration("SU-57", current_target_pos, alert_zone);
