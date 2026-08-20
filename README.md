@@ -10,7 +10,7 @@ It is entirely modularized, multi-threaded, and deploys instantly via GitHub Pag
 
 ## 🚀 Live Radar Console
 The tactical dashboard is running live in the cloud. Launch the screen, drop in custom callsigns, set your speeds, and try not to cause a multi-million dollar mid-air collision:
-👉 **https://github.io**
+👉 [https://t4rxnn-devel.github.io/SKYwatch-20/](https://t4rxnn-devel.github.io/SKYwatch-20/)
 
 ### 🎮 What's Happening On Screen?
 * **Smooth 3D Flight Banking:** Jets don't move like rigid text characters. They use programmatic linear interpolation to physically lean and bank into turns based on their true aerodynamics.
