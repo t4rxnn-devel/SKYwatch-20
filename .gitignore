@@ -1,0 +1,30 @@
+# Target build directories (CMake outputs)
+/[Bb]uild/
+/out/
+
+# Compiled Executables and Libraries
+*.exe
+*.out
+*.app
+*.a
+*.o
+*.so
+*.dylib
+
+# CMake generated system cache artifacts
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+
+# Local IDE configuration layers
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System temporary files
+.DS_Store
+Thumbs.db
