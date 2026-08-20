@@ -1,35 +1,53 @@
-// SkyWatch-20 Interacting Multiple Model Unscented Kalman Filter (IMM-UKF)
-// Industry-Standard Aerospace Target Tracking Core Module
+// ============================================================================
+// SkyWatch-20 Interacting Multiple Model Unscented Kalman Filter Header
+// Compliant with EUROCONTROL Surveillance Target Tracking Frameworks
+// ============================================================================
 
 #pragma once
-#include <vector>
 #include <string>
+#include <vector>
+
+// Fixed dimensions matching our 6D kinematic state array profiles
+constexpr int STATE_DIM = 6;
+constexpr int MEASURE_DIM = 3;
+constexpr int SIGMA_COUNT = 2 * STATE_DIM + 1;
 
 struct TrackingState {
-    // 3D Kinematics State Vectors: [X, Y, Z, Velocity_X, Velocity_Y, Velocity_Z]
-    double state_vector[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double covariance_matrix[6][6];
+    double state_vector[STATE_DIM];
+    double covariance_matrix[STATE_DIM][STATE_DIM];
 };
 
 class ImmUkfTracker {
 private:
     std::string m_target_callsign;
-    double m_model_probabilities[3]; // [Constant Velocity, Constant Acceleration, Coordinated Turn]
-    double m_transition_matrix[3][3];
+    double m_mu[3];
+    double m_p_ij[3][3];
     
-    // Unscented Transform Sigma Parameter metrics
-    int m_num_sigma_points;
-    double m_lambda;
+    double m_state_x[STATE_DIM];
+    double m_cov_P[STATE_DIM][STATE_DIM];
 
+    double m_alpha;
+    double m_kappa;
+    double m_beta;
+    double m_lambda;
+    double m_weights_c[SIGMA_COUNT];
+    double m_weights_m[SIGMA_COUNT];
+
+    void calculate_ut_weights() noexcept;
     void mix_filter_states() noexcept;
     void predict_sigma_points(double dt) noexcept;
-    void update_measurement_vectors(const double raw_radar_reading[3]) noexcept;
+    void update_measurement_vectors(double meas_x, double meas_y, double meas_z) noexcept;
 
 public:
-    ImmUkfTracker(std::string callsign) noexcept;
+    explicit ImmUkfTracker(std::string callsign) noexcept;
     
-    // Primary pipeline hook executed on every radar antenna sweep revolution
-    void process_radar_sweep(const double measurement_xyz[3], double dt_seconds) noexcept;
+    // Master antenna sweep pipeline tracker execution block
+    void process_radar_sweep(double raw_x, double raw_y, double raw_z, double dt_seconds) noexcept;
     
     [[nodiscard]] TrackingState get_refined_state() const noexcept;
 };
+
+// Pipeline C-Linkage Interface declaration hook
+extern "C" {
+    void process_tracker_step(const char* callsign, double x, double y, double z, double dt);
+}
