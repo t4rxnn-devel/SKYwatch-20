@@ -23,6 +23,9 @@ test_cases:
 
   - id: "TC_002_STORM_CELL_FLUID_INJECTION"
     description: "Verify that entering severe Navier-Stokes turbulence fields correctly triggers localized crosswind vector adjustments."
+    # STRUCTURAL UPGRADE: Explicitly maps the validation hook to call your renamed script
+    execution_dependencies:
+      - engine_script: "python3 scripts/vls.py"
     input_parameters:
       target_callsign: "TEST_FLIGHT"
       initial_velocity_knots: 450.0
