@@ -6,10 +6,33 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
 
+# 1. Background custom compilation directive compiling Rust to static binaries
+set(RUST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/tcas_automation)
+set(RUST_LIB_PATH ${CMAKE_CURRENT_BINARY_DIR}/libtcas_automation.a)
+
+add_custom_command(
+    OUTPUT ${RUST_LIB_PATH}
+    COMMAND cargo build --release
+    COMMAND ${CMAKE_COMMAND} -E copy ${RUST_SRC_DIR}/target/release/libtcas_automation.a ${RUST_LIB_PATH}
+    WORKING_DIRECTORY ${RUST_SRC_DIR}
+    COMMENT "Compiling safe Rust safety static library..."
+)
+
+add_custom_target(tcas_rust_binary DEPENDS ${RUST_LIB_PATH})
+
+# 2. Compile native C++ tracking execution engines
 add_executable(SpatialRadarExe 
     src/main.cpp 
     src/ImmUkfTracker.cpp
     src/AirspaceManager.cpp
 )
 
-target_link_libraries(SpatialRadarExe pthread dl)
+# Enforce synchronization boundaries inside build trees
+add_dependencies(SpatialRadarExe tcas_rust_binary)
+
+# Link everything into one clean native execution binary package
+target_link_libraries(SpatialRadarExe 
+    ${RUST_LIB_PATH}
+    pthread 
+    dl
+)
