@@ -1,0 +1,23 @@
+(* General Relativistic Lense-Thirring Spacetime Frame Dragging Solver *)
+
+LenseThirringPrecession[pos_List, spinAngularMomentum_List] := Module[
+    {G, c, r, rNorm, J, omegaLT},
+    G = 6.67430*10^-11;    (* Gravitational Constant *)
+    c = 2.99792458*10^8;   (* Speed of Light *)
+    
+    rNorm = Norm[pos];
+    
+    (* Spacetime Frame Dragging Precession Vector *)
+    omegaLT = (G / (c^2 * rNorm^3)) * (
+        (3 * Dot[spinAngularMomentum, pos] * pos) / (rNorm^2) - spinAngularMomentum
+    );
+    
+    omegaLT
+]
+
+(* Earth Angular Momentum Vector J = I * omega *)
+earthJ = {0.0, 0.0, 5.861 * 10^33}; (* kg m^2 / s *)
+satPos = {0.0, 6771000.0, 0.0};     (* 400km Low Earth Orbit *)
+
+wLT = LenseThirringPrecession[satPos, earthJ];
+Print["General Relativistic Frame Dragging Precession Rate (rad/s): ", wLT]
