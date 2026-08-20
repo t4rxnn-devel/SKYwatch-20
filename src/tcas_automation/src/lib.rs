@@ -1,6 +1,12 @@
 // SkyWatch-20 Hardened Safe Separation Core (Rust Native)
 // Compiled as a static library linkable directly by the C++ compiler matrix
 
+pub mod radar_telemetry;
+pub mod radar_utils;
+pub mod tcas_automation;
+pub mod tcas_compliance_node;
+pub mod wgs84_gravitational_model;
+
 #[repr(C)]
 pub struct AirspaceTarget {
     pub x_nm: f64,
