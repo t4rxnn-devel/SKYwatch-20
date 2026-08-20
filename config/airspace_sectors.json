@@ -1,0 +1,32 @@
+{
+  "airspace_metadata": {
+    "system_name": "SkyWatch-20 Radar Node",
+    "specification": "AIXM 5.1 / ARINC 424 Navigation Structure",
+    "center_anchor_callsign": "KORD-APP"
+  },
+  "terminal_approach_corridors": [
+    {
+      "corridor_id": "APPROACH-RUNWAY-09R",
+      "minimum_entry_altitude_ft": 4000.0,
+      "maximum_speed_limit_knots": 250.0,
+      "coordinates_nm": [
+        {"x": -24.0, "y": -5.0},
+        {"x": -10.0, "y": -2.0},
+        {"x": 0.0, "y": 0.0}
+      ]
+    }
+  ],
+  "restricted_military_airspace": [
+    {
+      "zone_id": "R-2508",
+      "floor_altitude_ft": 0.0,
+      "ceiling_altitude_ft": 99000.0,
+      "boundary_polygon_nm": [
+        {"x": 10.0, "y": 10.0},
+        {"x": 24.0, "y": 10.0},
+        {"x": 24.0, "y": 24.0},
+        {"x": 10.0, "y": 24.0}
+      ]
+    }
+  ]
+}
