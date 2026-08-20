@@ -1,0 +1,19 @@
+(* Long-Range Coriolis and Centrifugal Acceleration Vector Field *)
+
+CoriolisAcceleration[vVector_List, latitudeDeg_] := Module[
+    {omegaE, omegaVec, latRad, aCor},
+    omegaE = 7.2921159 * 10^-5; (* Earth Angular Velocity rad/s *)
+    latRad = latitudeDeg * Degree;
+    
+    (* Earth rotation vector in local North-East-Down (NED) frame *)
+    omegaVec = {omegaE * Cos[latRad], 0, -omegaE * Sin[latRad]};
+    
+    (* Coriolis Acceleration: -2 * (Omega x V) *)
+    aCor = -2 * Cross[omegaVec, vVector];
+    aCor
+]
+
+(* Test Execution: High-speed target traveling East at 800 m/s at 45 deg Latitude *)
+vTarget = {0.0, 800.0, 0.0}; (* Local NED Velocity Vector *)
+accCor = CoriolisAcceleration[vTarget, 45.0];
+Print["Coriolis Acceleration Vector (m/s^2) [N, E, D]: ", accCor]
