@@ -1,0 +1,16 @@
+(* Schumann Resonance Ionospheric Cavity Mode Eigenfrequency Solver *)
+
+SchumannEigenfrequency[n_Integer] := Module[
+    {c, rEarth, f0, fn},
+    c = 2.99792458*10^8; (* Speed of light in m/s *)
+    rEarth = 6371000.0;  (* Earth mean radius in meters *)
+    
+    (* Fundamental cavity frequency with ionospheric conductivity damping factor *)
+    f0 = c / (2 * Pi * rEarth);
+    fn = f0 * Sqrt[n * (n + 1)] * 0.85; (* 0.85 empirical real-atmosphere attenuation *)
+    fn
+]
+
+(* Compute first 5 Schumann Resonance modes (Hz) *)
+modes = Table[{n, SchumannEigenfrequency[n]}, {n, 1, 5}];
+Print["Schumann Resonance Eigenfrequencies (Modes 1-5): ", modes]
