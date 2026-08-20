@@ -1,0 +1,29 @@
+(* AIXM 5.1 Airspace Volume Intersection Solver *)
+
+AirspaceIntersection[routeStart_List, routeEnd_List, polyBounds_List, altMin_, altMax_] := Module[
+    {parametricRoute, t, polyRegion, intersection},
+    
+    (* Define 3D Parametric Ray for aircraft flight vector *)
+    parametricRoute = routeStart + t * (routeEnd - routeStart);
+    
+    (* Create Polygon Boundary Prism *)
+    polyRegion = Polygon[polyBounds];
+    
+    (* Solve for intersection parameter t in [0, 1] *)
+    intersection = Solve[
+        RegionMember[polyRegion, {parametricRoute[[1]], parametricRoute[[2]]}] &&
+        parametricRoute[[3]] >= altMin && parametricRoute[[3]] <= altMax &&
+        t >= 0 && t <= 1,
+        t
+    ];
+    
+    intersection
+]
+
+(* Test: Route cutting through 3D polygon sector *)
+startPt = {0.0, 0.0, 5000.0};
+endPt = {100.0, 100.0, 5000.0};
+sectorPoly = {{20.0, 20.0}, {80.0, 20.0}, {80.0, 80.0}, {20.0, 80.0}};
+
+res = AirspaceIntersection[startPt, endPt, sectorPoly, 1000.0, 10000.0];
+Print["AIXM Airspace Breach Vector Intersect Params: ", res]
