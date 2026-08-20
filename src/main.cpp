@@ -1,34 +1,46 @@
 #include "RadarSystem.hpp"
-#include <iostream>
-#include <thread>
-#include <chrono>
-#include <cstdlib> // Required for native system call operations
+#include "PhysicsSolver.hpp"
+#include "RadarGuiLayout.hpp"
+#include <SFML/Graphics.hpp>
+#include <vector>
 
 int main() {
-    // 1. SILENT LAUNCH LAYER: Automatically kick off the parallel grid binary 
-    // This executes your parallel algorithms natively without user input required.
-    std::cout << "\033[1;33m[SYSTEM INIT] Invoking parallel GPU co-processor nodes...\033[0m\n";
-    
-    // Auto-compiles or runs the parallel component cleanly in the background
-    #if defined(_WIN32)
-        std::system("bend run scripts\\parallel_grid.bend > nul 2>&1");
-    #else
-        std::system("bend run scripts/parallel_grid.bend > /dev/null 2>&1 &");
-    #endif
+    // Generate clean environment zones
+    std::vector<WeatherZone> active_storms = {
+        {10.0, 8.0, 5.0, 1.2},   
+        {-12.0, -10.0, 6.0, 1.8} 
+    };
 
-    // 2. CORE ENGINE INITIALIZATION
-    RadarSystem control_tower(5.0, 60.0);
+    // Instantiate base tracking datasets
+    std::vector<Aircraft> fleet;
+    fleet.push_back(Aircraft("UAL104", 480.0, {-15.0, -15.0, 5.0}, {{-5.0, -5.0, 5.0}, {15.0, 15.0, 5.0}}));
+    fleet.push_back(Aircraft("AAL892", 460.0, {15.0, 15.0, 4.9}, {{5.0, 5.0, 4.9}, {-15.0, -15.0, 4.9}}));
+    fleet.push_back(Aircraft("DAL440", 500.0, {-18.0, 10.0, 6.0}, {{0.0, 0.0, 6.0}, {18.0, -10.0, 6.0}}));
 
-    control_tower.track_aircraft(Aircraft("UAL104", 480.0, {-15.0, -15.0, 5.0}, {{-5.0, -5.0, 5.0}, {15.0, 15.0, 5.0}}));
-    control_tower.track_aircraft(Aircraft("AAL892", 460.0, {15.0, 15.0, 4.9}, {{5.0, 5.0, 4.9}, {-15.0, -15.0, 4.9}}));
-    control_tower.track_aircraft(Aircraft("DAL440", 500.0, {-18.0, 10.0, 6.0}, {{0.0, 0.0, 6.0}, {18.0, -10.0, 6.0}}));
+    // Setup visual dimensions 
+    sf::RenderWindow window(sf::VideoMode(800, 800), "SkyWatch-20 Tactical Interface System", sf::Style::Titlebar | sf::Style::Close);
+    window.setFramerateLimit(60);
 
-    for (int step = 0; step < 50; ++step) {
-        control_tower.simulate_time_step(2.0); 
-        control_tower.process_spatial_tcas_alerts();
-        control_tower.render_ansi_visualizer();
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    RadarGuiLayout ui_manager(800, 800);
+    float sweep_angle = 0.0f;
+
+    // GUI Master Window Lifecycle Execution loop
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+        // Run isolated calculations away from standard graphic steps
+        PhysicsSolver::compute_flight_dynamics(fleet, active_storms, 0.016f); // 60 FPS tick rates
+
+        // Increment scanline parameters smoothly
+        sweep_angle += 0.02f;
+        if (sweep_angle >= 2.0f * 3.14159f) sweep_angle -= 2.0f * 3.14159f;
+
+        // Render graphical matrix
+        ui_manager.render_tactical_frame(window, fleet, active_storms, sweep_angle);
     }
 
     return 0;
