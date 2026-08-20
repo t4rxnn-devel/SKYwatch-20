@@ -22,8 +22,8 @@ add_custom_target(tcas_rust_binary DEPENDS ${RUST_LIB_PATH})
 
 # 2. Compile native C++ tracking execution engines
 # NOTICE: .HC, .py, .m, and .wln files are strictly omitted from this target.
-add_executable(SpatialRadarExe 
-    src/main.cpp 
+add_executable(SpatialRadarExe
+    src/main.cpp
     src/ImmUkfTracker.cpp
     src/AirspaceManager.cpp
 )
@@ -32,8 +32,8 @@ add_executable(SpatialRadarExe
 add_dependencies(SpatialRadarExe tcas_rust_binary)
 
 # Link the valid compiled binary objects natively
-target_link_libraries(SpatialRadarExe 
+target_link_libraries(SpatialRadarExe
     ${RUST_LIB_PATH}
-    pthread 
+    pthread
     dl
 )
