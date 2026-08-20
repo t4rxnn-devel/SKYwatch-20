@@ -1,18 +1,22 @@
-#!/bin/bash
-# SkyWatch-20 Master Orchestration Script
+#!/usr/bin/env bash
+# SkyWatch-20 Hardened Production Execution Script
+set -e
 
-echo "============== Building SkyWatch-20 Ecosystem =============="
+echo "📦 Setting up development environment packages..."
+sudo apt-get update && sudo apt-get install -y python3-dev python3-pip libssl-dev cmake build-essential
 
-# 1. Clean CMake compilation steps for the core C++ engine
-mkdir -p build && cd build
-cmake .. && cmake --build .
-
-if [ $? -eq 0 ]; then
-    echo "✅ Native binary generated cleanly."
-    echo "🚀 Starting primary control tower visualization mapping..."
-    # 2. Automatically spin up the app with zero extra typing flags needed
-    ./SpatialRadarExe
-else
-    echo "❌ Error building system files."
-    exit 1
+# Verify Rust/Cargo toolchain availability
+if ! command -v rustc &> /dev/null; then
+    echo "🦀 Fetching Rust compiler components..."
+    curl --proto '=https' --tlsv1.2 -sSf https://rustup.rs | sh -s -- -y
+    source $HOME/.cargo/env
 fi
+
+echo "🏗️ Initializing CMake Native Compilation Matrix..."
+mkdir -p build
+cd build
+cmake ..
+cmake --build .
+
+echo "🚀 Executing Integrated Multi-Language Aerospace Suite..."
+./SpatialRadarExe
