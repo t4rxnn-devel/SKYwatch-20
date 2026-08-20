@@ -1,61 +1,89 @@
 // ============================================================================
-// SkyWatch-20 True Native Multi-Language Core Orchestration Engine
-// Compiles C++20 and Dynamically Ingests HolyC Code Elements Natively
+// SkyWatch-20 Avionics Orchestrator & Live WebSocket Telemetry Server
+// Connects C++ Core Tracking, Rust Static FFI, and WebGL Frontend UI Units
 // ============================================================================
 
 #include "../include/ImmUkfTracker.hpp"
 #include "../include/AirspaceManager.hpp"
 #include "../include/Vector3D.hpp"
-#include "../include/HolyC_Transpiler.hpp"
+#include "../include/HolyRadarCore.h"
+#include "../include/tcas_bridge.h"
 #include <iostream>
-#include <vector>
 #include <string>
-#include <thread>
-#include <chrono>
+#include <cstdlib>
+#include <cstring>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int main() {
     std::cout << "=========================================================\n";
-    std::cout << "📡 SKYWATCH-20 TRUE NATIVE PACKAGED SYSTEM ONLINE\n";
+    std::cout << "📡 SKYWATCH-20 TELEMETRY ENGINE & FF-INTERACTION LAYER\n";
     std::cout << "=========================================================\n\n";
 
-    // --- PIPELINE STEP 1: CONFIGURE SYSTEM INITIALIZATION ---
-    AirspaceManager airspace_control;
-    ImmUkfTracker tracking_filter("SU-57");
-    Vector3D current_position{14.5, 14.5, 2.0}; // Target metrics in NM
+    // 1. Configure the POSIX IPC Network socket bus server
+    int server_fd, client_fd;
+    struct sockaddr_in address{};
+    int opt = 1;
+    int addrlen = sizeof(address);
 
-    // --- PIPELINE STEP 2: TRANSPILER JIT EXECUTION ON HOLYC FILES ---
-    std::cout << "⛪ [HOLYC TRANSPILER]: Initializing JIT compiler pipelines...\n";
-    
-    std::string compiled_radar_core = HolyCTranspiler::compile_to_native_cpp("src/HolyRadarCore.HC");
-    std::string compiled_collision  = HolyCTranspiler::compile_to_native_cpp("src/DivineCollision.HC");
-
-    if (compiled_radar_core.empty() || compiled_collision.empty()) {
-        std::cerr << "❌ [CRITICAL COMPILER FAULT]: Transpiler bridge failed to mount .HC files.\n";
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        std::cerr << "❌ [SOCKET ERROR]: Construction fault.\n";
         return -1;
     }
-    std::cout << "   -> src/HolyRadarCore.HC transpiled successfully.\n";
-    std::cout << "   -> src/DivineCollision.HC transpiled successfully.\n";
-    std::cout << "✅ [HOLYC STATUS]: All JIT bytecode successfully mapped to native CPU memory.\n\n";
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    // --- PIPELINE STEP 3: EXECUTE DYNAMIC MONITORING TRACKS ---
-    std::cout << "⚙️ [C++ FILTER]: Computing 6D IMM-UKF states and WGS84 gravity matrices...\n";
-    
-    // Process input metrics directly through our active tracker algorithms
-    tracking_filter.process_radar_sweep(current_position.x, current_position.y, current_position.z, 2.0);
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(8000); // Serve telemetry payloads on port 8000
 
-    std::string breached_sector;
-    bool perimeter_violated = airspace_control.check_perimeter_penetration("SU-57", current_position, breached_sector);
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+        std::cerr << "❌ [BIND ERROR]: Port 8000 occupied.\n";
+        return -1;
+    }
+    listen(server_fd, 3);
+    std::cout << "📡 [IPC NETWORK]: Telemetry HTTP bus server online at localhost:8000\n";
 
-    if (perimeter_violated && breached_sector == "R_2508_MIL") {
-        std::cout << "\n🚨 [PERIMETER BREACH]: Triggering HolyC Security Alert Systems...\n";
-        // Directly executing the transpiled code's speaker interrupt block natively inside our C++ runtime loop
-        std::cout << "🔊 [PC-SPEAKER INTERRUPT]: ";
-        std::cout << "\a" << std::flush; // Triggers the physical motherboard speaker chime
-        std::cout << "Chirp alarm emitted at 880Hz for 200ms.\n";
+    AirspaceManager airspace;
+    ImmUkfTracker tracker("SU-57");
+
+    // Mock live targets metrics
+    CVector3D ual_pos{-2.0, -2.0, 1.0};
+    CVector3D su_pos{-1.9, -1.8, 1.1};
+
+    std::cout << "📥 [DATA LOOP]: Awaiting WebGL frontend web tab connection handshake...\n";
+    if ((client_fd = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0) {
+        return -1;
+    }
+    std::cout << "✅ [CONNECT]: WebGL client attached. Stream broadcasting initialized.\n";
+
+    for (int sweep = 1; sweep <= 5; ++sweep) {
+        // Step 1: Run Rust separation checks
+        bool collision = evaluate_loss_of_separation(
+            ual_pos.x, ual_pos.y, ual_pos.z * 6076.0,
+            su_pos.x,  su_pos.y,  su_pos.z * 6076.0,
+            5.0, 1000.0
+        );
+
+        if (collision) {
+            EmitDivineWarningChirp(); // Trigger transpiled audio alert
+        }
+
+        // Step 2: Format flight parameters into structured JSON telemetry blocks
+        std::string json_payload = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n"
+                                   "{\"sweep\":" + std::to_string(sweep) + 
+                                   ",\"callsign\":\"SU-57\",\"x\":" + std::to_string(su_pos.x) + 
+                                   ",\"y\":" + std::to_string(su_pos.y) + 
+                                   ",\"collision\":" + (collision ? "true" : "false") + "}\n";
+
+        // Step 3: Stream payload directly to index.html WebGL client
+        send(client_fd, json_payload.c_str(), json_payload.length(), 0);
+        
+        su_pos.x += 0.5; su_pos.y += 0.5; // Simulate motion vectors
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    std::cout << "\n=========================================================\n";
-    std::cout << "🏆 SYSTEM SUCCESS: ALL PIPELINES BUILT AND RUNNING FOR REAL\n";
-    std::cout << "=========================================================\n";
+    close(client_fd); close(server_fd);
     return 0;
 }
