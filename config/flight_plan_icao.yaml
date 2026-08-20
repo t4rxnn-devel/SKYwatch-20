@@ -1,0 +1,27 @@
+icao_flight_plan_format:
+  message_type: "FPL"
+  aircraft_identification: "UAL104"
+  flight_rules: "I" # I = Strict Instrument Flight Rules (IFR)
+  type_of_flight: "G" # G = General Aviation / Operational Team
+  number_of_aircraft: 1
+  type_of_aircraft: "F22" # Official ICAO aircraft type designator code
+  wake_turbulence_category: "H" # H = Heavy Wake Turbulence Profile
+
+  equipment:
+    communication_navigation: "SDFGHIRWY" # Standard avionics cap indexes
+    transponder: "LB1" # ADS-B Out / Mode S transponder capabilities
+
+  departure_aerodrome: "KORD"
+  estimated_off_block_time_utc: "1420"
+  
+  cruising_speed:
+    unit: "N" # N = Knots (Nautical Miles per Hour)
+    value: 480
+
+  cruising_level:
+    unit: "F" # F = Flight Level (Standard Barometric Altitude Indicator)
+    value: 360 # Flight Level 360 = 36,000 Feet
+
+  route_string: "KORD DCT OBK J101 GIJ DCT KPIT"
+  destination_aerodrome: "KPIT"
+  total_estimated_elapsed_time: "0134" # 1 Hour 34 Minutes en-route duration
