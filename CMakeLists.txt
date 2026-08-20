@@ -6,12 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
 
-# Compile clean, functional native binaries
 add_executable(SpatialRadarExe 
     src/main.cpp 
     src/ImmUkfTracker.cpp
     src/AirspaceManager.cpp
-    src/HolyC_Virtual_Emulator.cpp
 )
 
 target_link_libraries(SpatialRadarExe pthread dl)
