@@ -1,0 +1,16 @@
+(* Radar Cross Section (RCS) Physical Optics Approximation *)
+
+RCSFlatPlate[length_, width_, lambda_, theta_] := Module[
+    {k, area, pattern},
+    k = (2 * Pi) / lambda;
+    area = length * width;
+    If[theta == 0,
+        (4 * Pi * area^2) / lambda^2,
+        pattern = Sinc[k * length * Sin[theta] / 2]^2;
+        ((4 * Pi * area^2) / lambda^2) * Cos[theta]^2 * pattern
+    ]
+]
+
+(* Example Evaluation: 2m x 1m panel at 10 GHz (lambda = 0.03m) over angle range *)
+results = Table[{deg, RCSFlatPlate[2.0, 1.0, 0.03, deg Degree]}, {deg, 0, 89, 5}];
+Print["Angle (deg) vs RCS (m^2): ", results]
