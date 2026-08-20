@@ -1,5 +1,5 @@
-// SkyWatch-20 High-Integrity Log Exporter Utility Engine
-// Handles automated stream writing to preserve real-time system performance logs
+// SkyWatch-20 Cryptographically Secured Log Exporter Utility Engine
+// Protects exported mission records via AES-256-CBC Encryption
 
 #pragma once
 #include <string>
@@ -13,13 +13,17 @@ private:
     std::vector<std::string> m_buffered_logs;
     mutable std::mutex m_export_mutex;
 
+    // Cryptographic keys (Industry-standard 256-bit keys and 128-bit Initial Vectors)
+    unsigned char m_aes_key[32]; 
+    unsigned char m_aes_iv[16];  
+
+    // Performs the mathematical block transformations natively
+    [[nodiscard]] std::vector<unsigned char> encrypt_payload(const std::string& plaintext) const noexcept;
+
 public:
     explicit LogExporter(std::string output_path) noexcept;
     ~LogExporter();
 
-    // Appends telemetry data safely to the runtime memory array matrix
     void capture_log_line(const std::string& message) noexcept;
-
-    // Executes the automated physical file output export write sequence to disk
     void execute_disk_export() noexcept;
 };
