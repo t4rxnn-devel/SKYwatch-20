@@ -2,8 +2,6 @@
 // Compliant with RTCA DO-178C Level A Safety Regulations
 
 use std::net::UdpSocket;
-use std::thread;
-use std::time::Duration;
 
 fn main() -> std::io::Result<()> {
     // Connect to the local C++ telemetry network socket bus
