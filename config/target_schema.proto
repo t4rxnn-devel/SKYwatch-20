@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package skywatch.radar;
+
+// Mirror schema mapping standard EUROCONTROL ASTERIX Category 062 track messages
+message AsterixTrackReport {
+  string callsign = 1;         // Target transponder address (Callsign)
+  uint32 track_number = 2;     // Internal radar sequencer identification index
+  
+  message Position3D {
+    double x_nautical_miles = 1;
+    double y_nautical_miles = 2;
+    double altitude_feet = 3;
+  }
+  
+  Position3D current_position = 3;
+  
+  double velocity_knots = 4;
+  double heading_angle_radians = 5;
+  
+  bool tcas_resolution_active = 6; // Safety avoidance alert state flag
+}
