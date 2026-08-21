@@ -1,6 +1,7 @@
 // SkyWatch-20 Hardened Safe Separation Core (Rust Native)
 // Compiled as a static library linkable directly by the C++ compiler matrix
 
+pub mod do_178c_safety_monitor;
 pub mod radar_telemetry;
 pub mod radar_utils;
 pub mod tcas_automation;
