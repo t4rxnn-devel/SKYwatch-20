@@ -17,7 +17,7 @@ jobs:
       - name: Install System Toolchains
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential libssl-dev python3 tar zip
+          sudo apt-get install -y cmake build-essential libssl-dev python3
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -36,20 +36,20 @@ jobs:
 
       - name: Assemble Release Archives
         run: |
-          mkdir -p package_dir
-          cp -r index.html gui_server.py include config scripts start_app.bat start_app.command package_dir/
           mkdir -p package_dir/build package_dir/target/release
+          cp -r index.html gui_server.py include config scripts start_app.bat start_app.command package_dir/
           cp build/skywatch_core package_dir/build/ 2>/dev/null || true
           cp target/release/tcas_automation package_dir/target/release/ 2>/dev/null || true
           
+          # Create tar.gz archives for Linux and Windows package bundles
           tar -czvf skywatch-20-linux-x64.tar.gz -C package_dir .
-          cd package_dir && zip -r ../skywatch-20-windows-x64.zip . && cd ..
+          tar -czvf skywatch-20-windows-x64.tar.gz -C package_dir .
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
             skywatch-20-linux-x64.tar.gz
-            skywatch-20-windows-x64.zip
+            skywatch-20-windows-x64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
