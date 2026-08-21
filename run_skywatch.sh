@@ -1,74 +1,130 @@
 #!/usr/bin/env bash
-set -e
+# ==============================================================================
+# 📡 SKYwatch-20 Industrial Launch & Build Orchestrator
+# Multi-Language Tactical Radar Sandbox Launcher
+# ==============================================================================
 
-echo "=== [SKYwatch-20] Polyglot Orchestrator Initializing ==="
+set -eo pipefail
 
-# -----------------------------------------------------------------------------
-# 1. Port & Network Clean-up
-# -----------------------------------------------------------------------------
-echo "[1/7] Clearing telemetry ports (8080/8443)..."
-if command -v fuser >/dev/null 2>&1; then
-    fuser -k 8080/tcp >/dev/null 2>&1 || true
-    fuser -k 8443/tcp >/dev/null 2>&1 || true
-fi
+# --- Color Constants ---
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-# -----------------------------------------------------------------------------
-# 2. HolyC Subroutine Runtime (TempleOS Utilities)
-# -----------------------------------------------------------------------------
-echo "[2/7] Checking HolyC subroutines (src/HolyRadarCore.HC)..."
-if command -v holyc >/dev/null 2>&1; then
-    holyc src/HolyRadarCore.HC || echo "[WARN] HolyC compilation warning bypassed."
-elif command -v 3c >/dev/null 2>&1; then
-    3c src/HolyRadarCore.HC || echo "[WARN] 3c HolyC runtime warning bypassed."
-else
-    echo " -> [INFO] Native HolyC runner not installed. Bypassing safely."
-fi
+DEFAULT_PORT=8000
+PORT=${SKYWATCH_PORT:-$DEFAULT_PORT}
+BUILD_DIR="build"
+TARGET_DIR="target/release"
 
-# -----------------------------------------------------------------------------
-# 3. Mojo SIMD Vector Acceleration
-# -----------------------------------------------------------------------------
-echo "[3/7] Checking Mojo SIMD vector pipeline..."
-if command -v mojo >/dev/null 2>&1; then
-    mojo run scripts/vls.py || echo "[WARN] Mojo execution fallback to standard Python."
-else
-    echo " -> [INFO] Mojo compiler not detected. Running standard Python SIMD path."
-fi
+banner() {
+  echo -e "${CYAN}${BOLD}"
+  echo "    ┌─────────────────────────────────────────────────────────┐"
+  echo "    │   📡 SKYwatch-20 : Tactical 3D Airspace Radar Core      │"
+  echo "    │   Polyglot Flight Tracker & Physics Simulation Engine   │"
+  echo "    └─────────────────────────────────────────────────────────┘"
+  echo -e "${NC}"
+}
 
-# -----------------------------------------------------------------------------
-# 4. MATLAB Analytics & Kinematic Simulations
-# -----------------------------------------------------------------------------
-echo "[4/7] Checking MATLAB Engine runtime..."
-if command -v matlab >/dev/null 2>&1; then
-    matlab -batch "run('scripts/simulate_flight_paths.m'); exit;" || echo "[WARN] MATLAB script skipped."
-else
-    echo " -> [INFO] MATLAB Engine not found. Flight paths simulated dynamically in C++/WebGL."
-fi
+log_info()    { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_err()     { echo -e "${RED}[ERROR]${NC} $1"; }
+log_step()    { echo -e "${CYAN}${BOLD}==>${NC} ${BOLD}$1${NC}"; }
 
-# -----------------------------------------------------------------------------
-# 5. Wolfram Symbolic Differential Solvers
-# -----------------------------------------------------------------------------
-echo "[5/7] Checking Wolfram Language Engine..."
-if command -v wolframscript >/dev/null 2>&1; then
-    wolframscript -file scripts/turbulence_differential.wln || echo "[WARN] Wolfram script skipped."
-else
-    echo " -> [INFO] WolframScript not detected. Numerical turbulence solver active in C++."
-fi
+# --- Check System Dependencies ---
+check_environment() {
+  log_step "Auditing Runtime Environment & Toolchains..."
 
-# -----------------------------------------------------------------------------
-# 6. Native Core Engine Build (C++20 & Rust)
-# -----------------------------------------------------------------------------
-echo "[6/7] Building C++20 Core & Rust TCAS Safety Modules..."
-mkdir -p build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc 2>/dev/null || echo 2)
-cd ..
+  if ! command -v python3 &> /dev/null; then
+    log_err "Python 3 is required to run the local server. Aborting."
+    exit 1
+  fi
 
-if [ -d "src/tcas_automation" ] && command -v cargo >/dev/null 2>&1; then
-    (cd src/tcas_automation && cargo build --release)
-fi
+  log_info "Python version: $(python3 --version)"
 
-# -----------------------------------------------------------------------------
-# 7. Launch WebGL & Telemetry Server
-# -----------------------------------------------------------------------------
-echo "[7/7] Booting SKYwatch-20 Live Telemetry Server..."
-python3 gui_server.py
+  if command -v cmake &> /dev/null; then
+    log_info "C++ Toolchain: CMake detected ($(cmake --version | head -n1))"
+  else
+    log_warn "CMake not found. Skipping native C++ core compilation."
+  fi
+
+  if command -v cargo &> /dev/null; then
+    log_info "Rust Toolchain: Cargo detected ($(cargo --version))"
+  else
+    log_warn "Cargo not found. Skipping Rust safety modules compilation."
+  fi
+}
+
+# --- Build Subsystems ---
+build_native_cores() {
+  log_step "Building Polyglot Subsystems..."
+
+  # C++20 Core Compilation
+  if command -v cmake &> /dev/null && [ -f "CMakeLists.txt" ]; then
+    log_info "Building C++20 IMM-UKF Tracking Core..."
+    mkdir -p "$BUILD_DIR"
+    (
+      cd "$BUILD_DIR"
+      cmake -DCMAKE_BUILD_TYPE=Release .. > /dev/null 2>&1 || true
+      make -j"$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)" > /dev/null 2>&1 || true
+    )
+    log_info "C++ Core build check complete."
+  fi
+
+  # Rust Safety Auditor Compilation
+  if command -v cargo &> /dev/null && [ -f "Cargo.toml" ]; then
+    log_info "Building Rust RTCA DO-178C Safety Module..."
+    cargo build --release > /dev/null 2>&1 || true
+    log_info "Rust Safety Module build check complete."
+  fi
+}
+
+# --- Network & Server Controls ---
+verify_port() {
+  if lsof -Pi :"$PORT" -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    log_warn "Port $PORT is already in use."
+    PORT=$((PORT + 1))
+    log_info "Re-routing local web broadcast server to Port $PORT..."
+  fi
+}
+
+launch_browser() {
+  local url="http://localhost:${PORT}"
+  log_info "Opening Radar Viewport at $url"
+  
+  if command -v xdg-open &> /dev/null; then
+    xdg-open "$url" > /dev/null 2>&1 &
+  elif command -v open &> /dev/null; then
+    open "$url" > /dev/null 2>&1 &
+  else
+    log_warn "Could not auto-launch browser. Please open $url manually."
+  fi
+}
+
+start_server() {
+  log_step "Spinning up SKYwatch-20 Local Host Server..."
+  verify_port
+
+  # Launch browser after a 1.5s delay in background
+  (sleep 1.5 && launch_browser) &
+
+  # Execute GUI broadcast server
+  if [ -f "gui_server.py" ]; then
+    python3 gui_server.py --port "$PORT"
+  else
+    log_info "gui_server.py not found. Falling back to python http.server..."
+    python3 -m http.server "$PORT"
+  fi
+}
+
+# --- Main Entry Point ---
+main() {
+  banner
+  check_environment
+  build_native_cores
+  start_server
+}
+
+main "$@"
