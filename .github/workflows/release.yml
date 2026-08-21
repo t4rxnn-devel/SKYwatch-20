@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+# Required to allow creating release objects and uploading assets
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     name: Build Release Bundles
@@ -37,19 +41,33 @@ jobs:
       - name: Assemble Release Archives
         run: |
           mkdir -p package_dir/build package_dir/target/release
-          cp -r index.html gui_server.py include config scripts start_app.bat start_app.command package_dir/
-          cp build/skywatch_core package_dir/build/ 2>/dev/null || true
-          cp target/release/tcas_automation package_dir/target/release/ 2>/dev/null || true
           
-          # Create tar.gz archives for Linux and Windows package bundles
+          # Safely copy files if they exist
+          for item in index.html gui_server.py include config scripts start_app.bat start_app.command; do
+            if [ -e "$item" ]; then
+              cp -r "$item" package_dir/
+            fi
+          done
+
+          if [ -f "build/skywatch_core" ]; then
+            cp build/skywatch_core package_dir/build/
+          fi
+
+          if [ -f "target/release/tcas_automation" ]; then
+            cp target/release/tcas_automation package_dir/target/release/
+          fi
+
+          # Compress assets into tarball bundles
           tar -czvf skywatch-20-linux-x64.tar.gz -C package_dir .
           tar -czvf skywatch-20-windows-x64.tar.gz -C package_dir .
 
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             skywatch-20-linux-x64.tar.gz
             skywatch-20-windows-x64.tar.gz
+          generate_release_notes: true
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
