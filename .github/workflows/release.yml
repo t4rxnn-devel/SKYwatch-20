@@ -6,25 +6,15 @@ on:
       - 'v*'
 
 jobs:
-  build-matrix:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: skywatch-20-linux-x64.tar.gz
-            binary_ext: ""
-          - os: windows-latest
-            artifact_name: skywatch-20-windows-x64.zip
-            binary_ext: ".exe"
+  build-and-release:
+    name: Build Release Bundles
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Install System Toolchains
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake build-essential libssl-dev python3 tar zip
@@ -32,12 +22,11 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build C++ IMM-UKF Core
+      - name: Build C++ Core
         run: |
-          mkdir -p build
-          cd build
+          mkdir -p build && cd build
           cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . --config Release
+          make -j$(nproc)
 
       - name: Build Rust Safety Auditor
         run: |
@@ -45,30 +34,22 @@ jobs:
             cargo build --release
           fi
 
-      - name: Assemble Linux Package
-        if: matrix.os == 'ubuntu-latest'
+      - name: Assemble Release Archives
         run: |
+          mkdir -p package_dir
+          cp -r index.html gui_server.py include config scripts start_app.bat start_app.command package_dir/
           mkdir -p package_dir/build package_dir/target/release
-          cp -r index.html gui_server.py include config scripts start_app.command package_dir/
           cp build/skywatch_core package_dir/build/ 2>/dev/null || true
           cp target/release/tcas_automation package_dir/target/release/ 2>/dev/null || true
-          tar -czvf ${{ matrix.artifact_name }} -C package_dir .
+          
+          tar -czvf skywatch-20-linux-x64.tar.gz -C package_dir .
+          cd package_dir && zip -r ../skywatch-20-windows-x64.zip . && cd ..
 
-      - name: Assemble Windows Package
-        if: matrix.os == 'windows-latest'
-        shell: powershell
-        run: |
-          New-Item -ItemType Directory -Force -Path package_dir/build, package_dir/target/release
-          Copy-Item index.html, gui_server.py, start_app.bat -Destination package_dir/
-          Copy-Item include, config, scripts -Destination package_dir/ -Recurse
-          if (Test-Path "build/Release/skywatch_core.exe") { Copy-Item "build/Release/skywatch_core.exe" "package_dir/build/" }
-          if (Test-Path "build/skywatch_core.exe") { Copy-Item "build/skywatch_core.exe" "package_dir/build/" }
-          if (Test-Path "target/release/tcas_automation.exe") { Copy-Item "target/release/tcas_automation.exe" "package_dir/target/release/" }
-          Compress-Archive -Path package_dir/* -DestinationPath ${{ matrix.artifact_name }}
-
-      - name: Upload Release Artifact
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ matrix.artifact_name }}
+          files: |
+            skywatch-20-linux-x64.tar.gz
+            skywatch-20-windows-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
