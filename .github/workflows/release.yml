@@ -44,7 +44,6 @@ jobs:
         run: |
           mkdir -p package_dir/build package_dir/target/release
           
-          # Safely copy files if they exist without failing on missing items
           for item in index.html gui_server.py include config scripts start_app.bat start_app.command; do
             if [ -e "$item" ]; then
               cp -r "$item" package_dir/
@@ -59,7 +58,6 @@ jobs:
             cp target/release/tcas_automation package_dir/target/release/
           fi
 
-          # Create archives safely
           tar -czvf skywatch-20-linux-x64.tar.gz -C package_dir .
 
       - name: Upload Release Assets
