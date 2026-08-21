@@ -4,6 +4,7 @@ SKYwatch-20 Mission Control Host & IPC Telemetry Bridge
 Enterprise-Grade Hybrid Server (Async WebSockets + HTTP Static Server + Native Subprocess Orchestrator)
 """
 
+import subprocess
 import asyncio
 import json
 import logging
@@ -129,13 +130,12 @@ async def broadcast_telemetry(data):
 
 # --- NATIVE SUBPROCESS & POLYGLOT PIPELINE MONITOR ---
 def spawn_native_engine(command, name):
-    """Spawns background native binaries (C++ / Rust / Python) and reads stdout pipe."""
     global RUNNING
     try:
-        proc = os.subprocess.Popen(
+        proc = subprocess.Popen(  # Fixed reference
             command,
-            stdout=os.subprocess.PIPE,
-            stderr=os.subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
             bufsize=1
         )
