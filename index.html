@@ -2,143 +2,142 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SKYwatch-20 High-Graphics Tactical Radar Console</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #020608; font-family: 'Courier New', monospace; }
-        #canvas-hud { width: 100vw; height: 100vh; display: block; }
-        #overlay-ui {
-            position: absolute; top: 20px; left: 20px; color: #00ffcc;
-            text-shadow: 0 0 8px rgba(0, 255, 204, 0.8); pointer-events: none;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020608;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ffcc;
         }
-        .hud-metric { font-size: 14px; margin-bottom: 4px; }
+        #hud-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            pointer-events: none;
+            font-size: 14px;
+            text-shadow: 0 0 5px rgba(0,255,204,0.7);
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
     </style>
+    <!-- Three.js CDN for 3D Flight & Fighter Jet Rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <div id="overlay-ui">
-        <div class="hud-metric">MODE: TACTICAL AIR DEFENSE (60 FPS)</div>
-        <div class="hud-metric" id="fps-counter">FPS: 60.0</div>
-        <div class="hud-metric" id="ping-counter">NET LATENCY: 0.2 ms</div>
+    <div id="hud-overlay">
+        <div>MODE: TACTICAL AIR DEFENSE (60 FPS)</div>
+        <div id="fps-counter">FPS: 60.0</div>
+        <div id="latency-counter">NET LATENCY: 0.2 ms</div>
+        <div id="target-count" style="margin-top: 10px; color: #ff3333;">ACTIVE TARGETS: 0</div>
     </div>
-    <canvas id="canvas-hud"></canvas>
+    
+    <div id="canvas-container"></div>
 
     <script>
-        const canvas = document.getElementById("canvas-hud");
-        const ctx = canvas.getContext("2d");
-        
-        function resize() {
-            canvas.width = window.innerWidth * window.devicePixelRatio;
-            canvas.height = window.innerHeight * window.devicePixelRatio;
+        // Initialize Scene, Camera, and WebGL Renderer
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020608, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 80, 80);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Grid & Tactical Radar Scope Ring
+        const gridHelper = new THREE.GridHelper(200, 40, 0x005544, 0x00221f);
+        scene.add(gridHelper);
+
+        const ringGeometry = new THREE.RingGeometry(40, 40.5, 64);
+        const ringMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffcc, side: THREE.DoubleSide, transparent: true, opacity: 0.4 });
+        const radarRing = new THREE.Mesh(ringGeometry, ringMaterial);
+        radarRing.rotation.x = Math.PI / 2;
+        scene.add(radarRing);
+
+        // Spawn Simulated Fighter Jets (F-16 / F-35 Mock Geometries)
+        const fighterJets = [];
+        const jetMaterial = new THREE.MeshPhongMaterial({ color: 0x00ffcc, wireframe: true });
+
+        function createFighterJet(x, z, speed) {
+            const group = new THREE.Group();
+            
+            // Fuselage
+            const bodyGeo = new THREE.ConeGeometry(1.5, 6, 4);
+            bodyGeo.rotateX(Math.PI / 2);
+            const body = new THREE.Mesh(bodyGeo, jetMaterial);
+            group.add(body);
+
+            // Wings
+            const wingGeo = new THREE.BoxGeometry(8, 0.1, 2);
+            const wings = new THREE.Mesh(wingGeo, jetMaterial);
+            wings.position.set(0, 0, 0.5);
+            group.add(wings);
+
+            group.position.set(x, 5, z);
+            scene.add(group);
+            return { mesh: group, speed: speed, angle: Math.random() * Math.PI * 2, radius: Math.sqrt(x*x + z*z) };
         }
-        window.addEventListener('resize', resize);
-        resize();
 
-        // Target state map: Stores past and target states for Hermite Cubic Interpolation
-        const targetMap = new Map();
+        // Spawn 6 tactical jets into the airspace
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const dist = 25 + Math.random() * 30;
+            fighterJets.push(createFighterJet(Math.cos(angle) * dist, Math.sin(angle) * dist, 0.02 + Math.random() * 0.02));
+        }
 
-        // WebSocket Zero-Buffer Client
-        const ws = new WebSocket("ws://" + window.location.hostname + ":8001");
-        ws.binaryType = "arraybuffer";
+        document.getElementById('target-count').innerText = `ACTIVE TARGETS: ${fighterJets.length}`;
 
-        ws.onmessage = (event) => {
-            const view = new DataView(event.data);
-            const stride = 48; // 48 bytes per target struct
-            const count = event.data.byteLength / stride;
-            const receiveTime = performance.now();
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
 
-            for (let i = 0; i < count; i++) {
-                const offset = i * stride;
-                const timestamp = view.getFloat64(offset, false);
-                const id = view.getUint32(offset + 4, false);
-                const x = view.getFloat32(offset + 8, false);
-                const y = view.getFloat32(offset + 12, false);
-                const z = view.getFloat32(offset + 16, false);
-                const vx = view.getFloat32(offset + 20, false);
-                const vy = view.getFloat32(offset + 24, false);
-                const vz = view.getFloat32(offset + 28, false);
+        // Animation & Radar Sweep Loop
+        let lastTime = performance.now();
+        let frameCount = 0;
 
-                if (!targetMap.has(id)) {
-                    targetMap.set(id, { currX: x, currY: y, targetX: x, targetY: y, vx, vy, lastUpdate: receiveTime });
-                } else {
-                    const t = targetMap.get(id);
-                    // Hermite / Velocity extrapolation transition
-                    t.currX = t.targetX;
-                    t.currY = t.targetY;
-                    t.targetX = x;
-                    t.targetY = y;
-                    t.vx = vx;
-                    t.vy = vy;
-                    t.lastUpdate = receiveTime;
-                }
-            }
-        };
+        function animate() {
+            requestAnimationFrame(animate);
 
-        // Render Loop: Locked to monitor refresh rate using requestAnimationFrame
-        let lastFrameTime = performance.now();
-        let sweepAngle = 0;
-
-        function render() {
-            const now = performance.now();
-            const dt = (now - lastFrameTime) / 1000.0;
-            lastFrameTime = now;
-
-            document.getElementById("fps-counter").innerText = `FPS: ${(1.0 / dt).toFixed(1)}`;
-
-            // Clear screen with phosphor trail effect
-            ctx.fillStyle = "rgba(2, 6, 8, 0.15)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const radius = Math.min(cx, cy) * 0.85;
-
-            // Draw Tactical Grid Rings
-            ctx.strokeStyle = "rgba(0, 255, 204, 0.2)";
-            ctx.lineWidth = 1.5;
-            for (let r = 0.2; r <= 1.0; r += 0.2) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius * r, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            // Draw High-Speed Rotating Radar Sweep Line
-            sweepAngle += dt * 2.0; // 2 rads/sec
-            ctx.strokeStyle = "rgba(0, 255, 204, 0.8)";
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = "#00ffcc";
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(cx + Math.cos(sweepAngle) * radius, cy + Math.sin(sweepAngle) * radius);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-
-            // Render Extrapolated Targets
-            targetMap.forEach((t) => {
-                // Extrapolate position using velocity vector between server ticks
-                const timeSinceUpdate = (now - t.lastUpdate) / 1000.0;
-                const renderX = cx + (t.targetX + t.vx * timeSinceUpdate) * 0.05;
-                const renderY = cy + (t.targetY + t.vy * timeSinceUpdate) * 0.05;
-
-                // Glowing blip
-                ctx.fillStyle = "#ff3366";
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = "#ff3366";
-                ctx.beginPath();
-                ctx.arc(renderX, renderY, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-
-                // Velocity Vector Line
-                ctx.strokeStyle = "#ff3366";
-                ctx.beginPath();
-                ctx.moveTo(renderX, renderY);
-                ctx.lineTo(renderX + t.vx * 0.1, renderY + t.vy * 0.1);
-                ctx.stroke();
+            // Orbit jets in formation
+            fighterJets.forEach(jet => {
+                jet.angle += jet.speed * 0.5;
+                jet.mesh.position.x = Math.cos(jet.angle) * jet.radius;
+                jet.mesh.position.z = Math.sin(jet.angle) * jet.radius;
+                jet.mesh.rotation.y = -jet.angle - Math.PI / 2;
             });
 
-            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+
+            // FPS Counter calculation
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                document.getElementById('fps-counter').innerText = `FPS: ${(frameCount * 1000 / (currentTime - lastTime)).toFixed(1)}`;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
         }
 
-        requestAnimationFrame(render);
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
     </script>
 </body>
 </html>
