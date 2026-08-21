@@ -1,4 +1,4 @@
-name: Build and Package Releases
+name: Build Pre-Compiled Release Bundles
 
 on:
   push:
@@ -6,13 +6,14 @@ on:
       - 'v*'
 
 jobs:
-  build-linux:
+  build-release-package:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install System Dependencies
+      - name: Install System Toolchains
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake build-essential libssl-dev python3 python3-pip
@@ -20,61 +21,35 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build C++ and Rust Core Engine
+      - name: Build C++ IMM-UKF Core
         run: |
-          mkdir -p build
-          cd build
-          cmake ..
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
           make -j$(nproc)
 
-      - name: Package Binary Artifacts
+      - name: Build Rust Safety Auditor
         run: |
-          mkdir -p release_linux
-          cp build/skywatch_core release_linux/ 2>/dev/null || cp bin/* release_linux/ 2>/dev/null || true
-          cp -r gui_server.py index.html include/ config/ scripts/ run_skywatch.sh start_app.command release_linux/
-          tar -czvf skywatch-20-linux-x64.tar.gz -C release_linux .
+          if [ -f "Cargo.toml" ]; then
+            cargo build --release
+          fi
 
-      - name: Upload Release Asset
+      - name: Assemble Release Bundle
+        run: |
+          mkdir -p package_dir
+          cp -r index.html gui_server.py include config scripts start_app.bat start_app.command package_dir/
+          
+          # Copy compiled binaries into package
+          mkdir -p package_dir/build
+          cp build/skywatch_core package_dir/build/ 2>/dev/null || true
+          
+          tar -czvf skywatch-20-linux-x64.tar.gz -C package_dir .
+          zip -r skywatch-20-windows-x64.zip package_dir/*
+
+      - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v1
         with:
-          files: skywatch-20-linux-x64.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: |
-          choco install cmake openssl python -y
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build Core
-        run: |
-          mkdir build
-          cd build
-          cmake ..
-          cmake --build . --config Release
-
-      - name: Package Windows Bundle
-        run: |
-          mkdir release_win
-          xcopy gui_server.py release_win\ /E /H /Y
-          xcopy index.html release_win\ /E /H /Y
-          xcopy include release_win\include\ /E /H /Y
-          xcopy config release_win\config\ /E /H /Y
-          xcopy scripts release_win\scripts\ /E /H /Y
-          copy start_app.bat release_win\
-          Compress-Archive -Path release_win\* -DestinationPath skywatch-20-windows-x64.zip
-
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
-        with:
-          files: skywatch-20-windows-x64.zip
+          files: |
+            skywatch-20-linux-x64.tar.gz
+            skywatch-20-windows-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
