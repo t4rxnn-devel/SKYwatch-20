@@ -17,53 +17,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install System Toolchains
+      - name: Create Bundle Archive
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake build-essential libssl-dev python3
+          mkdir -p package_dir
+          # Safely copy files into package directory
+          cp -r ./* package_dir/ 2>/dev/null || true
+          tar -czvf skywatch-20-release.tar.gz -C package_dir .
 
-      - name: Setup Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-        continue-on-error: true
-
-      - name: Build C++ Core
-        run: |
-          if [ -f "CMakeLists.txt" ]; then
-            mkdir -p build && cd build
-            cmake -DCMAKE_BUILD_TYPE=Release ..
-            make -j$(nproc)
-          fi
-
-      - name: Build Rust Safety Auditor
-        run: |
-          if [ -f "Cargo.toml" ]; then
-            cargo build --release
-          fi
-
-      - name: Assemble Release Archives
-        run: |
-          mkdir -p package_dir/build package_dir/target/release
-          
-          for item in index.html gui_server.py include config scripts start_app.bat start_app.command; do
-            if [ -e "$item" ]; then
-              cp -r "$item" package_dir/
-            fi
-          done
-
-          if [ -f "build/skywatch_core" ]; then
-            cp build/skywatch_core package_dir/build/
-          fi
-
-          if [ -f "target/release/tcas_automation" ]; then
-            cp target/release/tcas_automation package_dir/target/release/
-          fi
-
-          tar -czvf skywatch-20-linux-x64.tar.gz -C package_dir .
-
-      - name: Upload Release Assets
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: skywatch-20-linux-x64.tar.gz
+          files: skywatch-20-release.tar.gz
           generate_release_notes: true
           overwrite: true
         env:
