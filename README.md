@@ -12,6 +12,12 @@ It is entirely modularized, multi-threaded, and deploys instantly via GitHub Pag
 The tactical dashboard is running live in the cloud. Launch the screen, drop in custom callsigns, set your speeds, and try not to cause a multi-million dollar mid-air collision:
 👉 [https://t4rxnn-devel.github.io/SKYwatch-20/](https://t4rxnn-devel.github.io/SKYwatch-20/)
 
+## 📦 Quick Start (No Setup Required)
+
+1. Go to **[Releases](https://github.com/t4rxnn-devel/SKYwatch-20/releases)** on the right sidebar.
+2. Download `skywatch-20-windows-x64.zip` (Windows) or `skywatch-20-linux-x64.tar.gz` (Linux).
+3. Extract the folder and double-click `start_app.bat` (Windows) or `start_app.command` (macOS/Linux).
+
 ### 🎮 What's Happening On Screen?
 * **Smooth 3D Flight Banking:** Jets don't move like rigid text characters. They use programmatic linear interpolation to physically lean and bank into turns based on their true aerodynamics.
 * **Doppler Storm Failures:** The amber/orange blobs on your map are severe weather cells. Fly inside them, and localized Navier-Stokes fluid shear vectors will violently shake the aircraft's frame.
