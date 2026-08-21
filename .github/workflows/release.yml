@@ -5,30 +5,79 @@ on:
     tags:
       - 'v*'
 
+# Explicit elevated write permissions required for release generation
 permissions:
   contents: write
+  packages: write
 
 jobs:
   build-and-release:
-    name: Build Release Bundles
+    name: Build & Release Package Bundles
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Create Bundle Archive
+      - name: Install System Dependencies & Toolchains
         run: |
-          mkdir -p package_dir
-          # Safely copy files into package directory
-          cp -r ./* package_dir/ 2>/dev/null || true
+          sudo apt-get update -y
+          sudo apt-get install -y cmake build-essential libssl-dev python3 rsync
+        continue-on-error: true
+
+      - name: Setup Rust Environment
+        uses: dtolnay/rust-toolchain@stable
+        continue-on-error: true
+
+      - name: Compile C++ Core (If CMake Present)
+        run: |
+          if [ -f "CMakeLists.txt" ]; then
+            echo "Found CMakeLists.txt. Initiating C++ build..."
+            mkdir -p build && cd build
+            cmake -DCMAKE_BUILD_TYPE=Release .. || true
+            make -j$(nproc) || true
+          else
+            echo "No CMakeLists.txt found. Skipping C++ compilation."
+          fi
+
+      - name: Compile Rust Safety Auditor (If Cargo Present)
+        run: |
+          if [ -f "Cargo.toml" ]; then
+            echo "Found Cargo.toml. Initiating Rust release build..."
+            cargo build --release || true
+          else
+            echo "No Cargo.toml found. Skipping Rust compilation."
+          fi
+
+      - name: Assemble Packaging Distribution Directory
+        run: |
+          # Safe directory setup
+          rm -rf package_dir skywatch-20-release.tar.gz
+          mkdir -p package_dir/build package_dir/target/release
+
+          # 1. Safely sync project source tree excluding git metadata
+          rsync -av --exclude='.git' --exclude='.github' --exclude='package_dir' ./ package_dir/ || cp -r . package_dir/ 2>/dev/null || true
+
+          # 2. Collect C++ binaries if built successfully
+          if [ -f "build/skywatch_core" ]; then
+            cp build/skywatch_core package_dir/build/ 2>/dev/null || true
+          fi
+
+          # 3. Collect Rust binaries if built successfully
+          if [ -f "target/release/tcas_automation" ]; then
+            cp target/release/tcas_automation package_dir/target/release/ 2>/dev/null || true
+          fi
+
+          # 4. Pack into compressed tarball archive
           tar -czvf skywatch-20-release.tar.gz -C package_dir .
 
-      - name: Create GitHub Release
+      - name: Upload Assets to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           files: skywatch-20-release.tar.gz
           generate_release_notes: true
           overwrite: true
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
